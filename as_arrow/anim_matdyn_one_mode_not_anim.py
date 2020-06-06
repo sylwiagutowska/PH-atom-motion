@@ -10,8 +10,8 @@ class display():
      self.C=[]
      self.C2=[]
      self.A=10
-    def draw_lattice(self,crystal,crystal2):
-        self.C,self.C2=func.draw_lattice(crystal,crystal2)    
+    def draw_lattice(self,crystal,crystal_primitive):
+        self.C,self.C2=func.draw_lattice(crystal,crystal_primitive)    
     def set_scene(self,crystal):
         func.set_scene(crystal)
     def set_coord_system(self,alat):
@@ -35,18 +35,19 @@ class system(inputs):
         inputs.__init__(self)
         self.atoms=[]
         self.crystal=[]
-        self.crystal2=[]
-        self.SYMM_OP=[]
+        self.crystal_primitive=[]
+       # self.SYMM_OP=[]
         self.alat=0
  def read_crystal_info(self):
-  self.atoms,self.crystal,self.crystal2,self.alat=\
+  self.atoms,self.crystal,self.crystal_primitive,self.alat=\
        func.read_crystal_info(self.file_scf_out,self.if_conv_cell)
- def set_symm(self):
-  self.SYMM_OP= func.set_sym_bl(self.crystal2)
+# def set_symm(self):
+#  self.SYMM_OP= func.set_sym_bl(self.crystal_primitive)
  def move_atoms_to_cell(self):
   self.atoms=func.move_atoms_to_cell(self.atoms,self.crystal)
  def add_atoms_by_symmetry(self):
-  self.atoms=func.add_atoms_by_symmetry(self.atoms,self.crystal,self.SYMM_OP)
+  self.atoms=func.add_atoms_by_symmetry(self.atoms,\
+             self.crystal,self.crystal_primitive)
 class motion(inputs):
  def __init__(self):
        inputs.__init__(self)
@@ -76,12 +77,12 @@ obj.if_conv_cell=crystal_system.if_conv_cell
 obj.read_freqs_and_displacements()
 obj.ask_which_mode()
 crystal_system.read_crystal_info()
-crystal_system.set_symm()
+#crystal_system.set_symm()
 crystal_system.move_atoms_to_cell()
 crystal_system.add_atoms_by_symmetry()
 disp.set_scene(crystal_system.crystal)
 disp.set_coord_system(crystal_system.alat)
-disp.draw_lattice(crystal_system.crystal,crystal_system.crystal2)
+disp.draw_lattice(crystal_system.crystal,crystal_system.crystal_primitive)
 disp.draw_equilibrium_atoms(crystal_system.atoms)
 disp.draw_displacement_arrows(crystal_system.atoms,obj.vib)
 
