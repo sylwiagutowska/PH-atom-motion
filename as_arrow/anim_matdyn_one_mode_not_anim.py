@@ -3,13 +3,22 @@ import sys
 import numpy as np
 import ph_atom_motion_function as func
 
+from mpl_toolkits.mplot3d import proj3d
+def orthogonal_proj(zfront, zback):
+    a = (zfront+zback)/(zfront-zback)
+    b = -2*(zfront*zback)/(zfront-zback)
+    return numpy.array([[1,0,0,0],
+                        [0,1,0,0],
+                        [0,0,a,b],
+                        [0,0,0,zback]])
+proj3d.persp_transformation = orthogonal_proj
 
 class display():
     def __init__(self):
      self.COLORS=[color.red , color.yellow , color.green, color.purple , color.blue 	, color.cyan 	, color.orange 	, color.magenta ,color.orange, color.black	 ]
      self.C=[]
      self.C2=[]
-     self.A=10
+     self.A=10 #amplitude. The displacement is multiplied by A
     def draw_lattice(self,crystal,crystal_primitive):
         self.C,self.C2=func.draw_lattice(crystal,crystal_primitive)    
     def set_scene(self,crystal):
@@ -48,6 +57,7 @@ class system(inputs):
  def add_atoms_by_symmetry(self):
   self.atoms=func.add_atoms_by_symmetry(self.atoms,\
              self.crystal,self.crystal_primitive)
+
 class motion(inputs):
  def __init__(self):
        inputs.__init__(self)
@@ -85,84 +95,6 @@ disp.set_coord_system(crystal_system.alat)
 disp.draw_lattice(crystal_system.crystal,crystal_system.crystal_primitive)
 disp.draw_equilibrium_atoms(crystal_system.atoms)
 disp.draw_displacement_arrows(crystal_system.atoms,obj.vib)
-
-
-
-'''
-#add rest of pos
-atoms2=[]
-vib2=[]
-
-for (numi,i) in enumerate(atoms):
-   for j in C2:
-    add_atom(numi,i,atoms,atoms2,j,vib2,vib)
-
-for i in range(len(atoms2)):
- atoms.append(atoms2[i])
- vib.append(vib2[i])
-
-#atoms at the faces of cell
-atoms2=[]
-vib2=[]
-for (numi,i) in enumerate(atoms):
-  for (numk,k) in enumerate([i[1].x,i[1].y,i[1].z]):
-   if if_zero(k): 
-    add_atom(numi,i,atoms,atoms2,crystal[numk],vib2,vib)
-  if if_zero(i[1].x) and if_zero(i[1].y):  
-   add_atom(numi,i,atoms,atoms2,crystal[0]+crystal[1],vib2,vib)
-  if if_zero(i[1].y) and if_zero(i[1].z):  
-   add_atom(numi,i,atoms,atoms2,crystal[1]+crystal[2],vib2,vib)
-  if if_zero(i[1].x) and if_zero(i[1].z):  
-   add_atom(numi,i,atoms,atoms2,crystal[0]+crystal[2],vib2,vib)
-  if if_zero(i[1].x) and if_zero(i[1].y) and if_zero(i[1].z):  
-   add_atom(numi,i,atoms,atoms2,crystal[0]+crystal[1]+crystal[2],vib2,vib)
-for i in range(len(atoms2)):
- atoms.append(atoms2[i])
- vib.append(vib2[i])
-#atoms at the faces of cell
-atoms2=[]
-vib2=[]
-for (numi,i) in enumerate(atoms):
-  for (numk,k) in enumerate([i[1].x,i[1].y,i[1].z]):
-   if if_zero(k-alat): 
-    add_atom(numi,i,atoms,atoms2,-crystal[numk],vib2,vib)
-  if if_zero(i[1].x-alatxyz[0]) and if_zero(i[1].y-alatxyz[1]):  
-   add_atom(numi,i,atoms,atoms2,-crystal[0]-crystal[1],vib2,vib)
-  if if_zero(i[1].y-alatxyz[1]) and if_zero(i[1].z-alatxyz[2]):  
-   add_atom(numi,i,atoms,atoms2,-crystal[1]-crystal[2],vib2,vib)
-  if if_zero(i[1].x-alatxyz[0]) and if_zero(i[1].z-alatxyz[2]):  
-   add_atom(numi,i,atoms,atoms2,-crystal[0]-crystal[2],vib2,vib)
-  if if_zero(i[1].x-alatxyz[0]) and if_zero(i[1].y-alatxyz[1]) and if_zero(i[1].z-alatxyz[2]):  
-   add_atom(numi,i,atoms,atoms2,-crystal[0]-crystal[1]-crystal[2],vib2,vib)
-for i in range(len(atoms2)):
- atoms.append(atoms2[i])
- vib.append(vib2[i])
-
-
-
-
-atoms2=[]
-vib2=[]
-for (numi,i) in enumerate(atoms[:]):
- spr=0
- for j in atoms[numi+1:]:
-  if if_zero(i[1].x-j[1].x) and if_zero(i[1].y-j[1].y) and if_zero(i[1].z-j[1].z):
-   spr=1
-   break
- if spr==0: 
-  atoms2.append(i)
-  vib2.append(vib[numi])
-atoms=atoms2
-vib=vib2
-
-for i in atoms:
- print (i)
-print('no of atoms=',str(len(atoms)))
-'''
-
-
-
-
 
 
 

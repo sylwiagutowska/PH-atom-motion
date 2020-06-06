@@ -61,12 +61,9 @@ def move_atoms_to_cell(atoms2,crystal):
  return atoms2
 
 
-def ruotaijk(s,k):
-  return round_vec([s[0][0]*k[0]+s[0][1]*k[1]+s[0][2]*k[2],
-  s[1][0]*k[0]+s[1][1]*k[1]+s[1][2]*k[2],
-  s[2][0]*k[0]+s[2][1]*k[1]+s[2][2]*k[2]])
 
-def add_atoms_by_symmetry(atoms,crystal,crystal_primitive,SYMM_OP):
+
+def add_atoms_by_symmetry(atoms,crystal,crystal_primitive):
  #add atom at the faces
  pm=[-1.,0.,1.]
  cr=[h*crystal_primitive[0]+k*crystal_primitive[1]+l*crystal_primitive[2] for h in pm for k in pm for l in pm if not (h==0 and k==0 and l==0)]
