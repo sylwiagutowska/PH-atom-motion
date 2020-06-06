@@ -47,9 +47,9 @@ def move_one_atom_to_cell(atom_pos,crystal):
  cry=np.linalg.inv(np.transpose(crystal))
  v2=sum([atom_pos[m]*cry[:,m] for m in range(3)])
  for j in range(3):
-   while v2[j]>1:
+   while v2[j]>1+eps1:
     v2[j]-=1
-   while v2[j]<0:
+   while v2[j]<0-eps1:
     v2[j]+=1
  v2=round_vec(sum([v2[m]*np.transpose(crystal)[:,m] for m in range(3)]))
  return v2
@@ -61,12 +61,10 @@ def move_atoms_to_cell(atoms2,crystal):
  return atoms2
 
 
-
-
 def add_atoms_by_symmetry(atoms,crystal,crystal_primitive):
  #add atom at the faces
  pm=[-1.,0.,1.]
- cr=[h*crystal_primitive[0]+k*crystal_primitive[1]+l*crystal_primitive[2] for h in pm for k in pm for l in pm if not (h==0 and k==0 and l==0)]
+ cr=[round_vec(h*crystal_primitive[0]+k*crystal_primitive[1]+l*crystal_primitive[2]) for h in pm for k in pm for l in pm if not (h==0 and k==0 and l==0)]
  for i in atoms[:len(atoms)]:
   for e in cr:
    j= move_one_atom_to_cell(i[1]+e,crystal)
