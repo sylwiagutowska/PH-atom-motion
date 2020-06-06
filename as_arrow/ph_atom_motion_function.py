@@ -5,8 +5,11 @@ import numpy as np
 eps1=1e-4
 PRECIS=4
 
+def round_vec(v):
+ return np.array([ round(i,PRECIS) for i in v])
+
 def read_crystal_info(file_scf_out, if_conv_cell):
-  crystal,crystal2,atoms=[],[],[]
+  crystal,crystal_primitive,atoms=[],[],[]
   try: h=open(file_scf_out,'r')
   except: 
    print('Couldnt find scf.out file. Copy it here')
@@ -19,13 +22,13 @@ def read_crystal_info(file_scf_out, if_conv_cell):
    if ' number of atoms/cell' in tmp[i]: 
     nat=int(tmp[i].split()[-1])
    elif 'lattice parameter (alat)' in tmp[i]:
-    alat=float(tmp[i].split()[-2])
+    alat=round(float(tmp[i].split()[-2]),PRECIS)
    elif 'site n.     atom                  positions (alat units)' in tmp[i]:
     for m in range(nat):
      i=i+1
      tmpi=tmp[i].split()         
      atoms.append([tmpi[1],\
-                   np.array([alat*float(tmpi[-4]),\
+                   round_vec([alat*float(tmpi[-4]),\
                              alat*float(tmpi[-3]),
                              alat*float(tmpi[-2])]),
                    m ])
@@ -33,12 +36,12 @@ def read_crystal_info(file_scf_out, if_conv_cell):
     for j in range(3):
      i=i+1
      tmpi=tmp[i].split()
-     crystal2.append(\
-     np.array([alat*float(tmpi[3]),alat*float(tmpi[4]),alat*float(tmpi[5])]))
+     crystal_primitive.append(\
+     round_vec([alat*float(tmpi[3]),alat*float(tmpi[4]),alat*float(tmpi[5])]))
     if if_conv_cell==1 and ibrav in [1,2,3]:
-     crystal=np.array([alat,alat,alat])
-    else: crystal=crystal2
-  return atoms,crystal,crystal2,alat
+     crystal=np.array([alat*round_vec(m) for m in [[1,0,0],[0,1,0],[0,0,1]]])
+    else: crystal=crystal_primitive
+  return atoms,crystal,crystal_primitive,alat
 
 def move_one_atom_to_cell(atom_pos,crystal):
  cry=np.linalg.inv(np.transpose(crystal))
@@ -48,7 +51,7 @@ def move_one_atom_to_cell(atom_pos,crystal):
     v2[j]-=1
    while v2[j]<0:
     v2[j]+=1
- v2=sum([v2[m]*np.transpose(crystal)[:,m] for m in range(3)])
+ v2=round_vec(sum([v2[m]*np.transpose(crystal)[:,m] for m in range(3)]))
  return v2
 
 
@@ -59,41 +62,27 @@ def move_atoms_to_cell(atoms2,crystal):
 
 
 def ruotaijk(s,k):
-  return [s[0][0]*k[0]+s[0][1]*k[1]+s[0][2]*k[2],
+  return round_vec([s[0][0]*k[0]+s[0][1]*k[1]+s[0][2]*k[2],
   s[1][0]*k[0]+s[1][1]*k[1]+s[1][2]*k[2],
-  s[2][0]*k[0]+s[2][1]*k[1]+s[2][2]*k[2]]
+  s[2][0]*k[0]+s[2][1]*k[1]+s[2][2]*k[2]])
 
-def add_atoms_by_symmetry(atoms,crystal,SYMM_OP):
- 
+def add_atoms_by_symmetry(atoms,crystal,crystal_primitive,SYMM_OP):
+ #add atom at the faces
  pm=[-1.,0.,1.]
- cr=[h*crystal[0]+k*crystal[1]+l*crystal[2] for h in pm for k in pm for l in pm if not (h==0 and k==0 and l==0)]
- for i in atoms:
+ cr=[h*crystal_primitive[0]+k*crystal_primitive[1]+l*crystal_primitive[2] for h in pm for k in pm for l in pm if not (h==0 and k==0 and l==0)]
+ for i in atoms[:len(atoms)]:
   for e in cr:
    j= move_one_atom_to_cell(i[1]+e,crystal)
    sign=0
    for i2 in atoms:
-    if (j[0]-i2[1][0])<eps1 and  (j[1]-i2[1][1])<eps1 and  (j[2]-i2[1][2])<eps1:
+    if abs(j[0]-i2[1][0])<eps1 and  abs(j[1]-i2[1][1])<eps1 and  abs(j[2]-i2[1][2])<eps1:
      sign=1
      break
    if sign==0:
     k=i[:]
     k[1]=j
     atoms.append(k)
-
- for i in atoms:
-  for s in SYMM_OP:
-   j=ruotaijk(s,i[1])
-   j=move_one_atom_to_cell(j,crystal)
-   sign=0
-   for i2 in atoms:
-    if (j[0]-i2[1][0])<eps1 and  (j[1]-i2[1][1])<eps1 and  (j[2]-i2[1][2])<eps1:
-     sign=1
-     break
-   if sign==0:
-    k=i[:]
-    k[1]=j
-    atoms.append(k)
-
+    print(len(atoms))
  return atoms
 
 def ask_if_conv_cell():
