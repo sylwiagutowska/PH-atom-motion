@@ -3,32 +3,30 @@ import sys
 import numpy as np
 import ph_atom_motion_function as func
 
-from mpl_toolkits.mplot3d import proj3d
-def orthogonal_proj(zfront, zback):
-    a = (zfront+zback)/(zfront-zback)
-    b = -2*(zfront*zback)/(zfront-zback)
-    return numpy.array([[1,0,0,0],
-                        [0,1,0,0],
-                        [0,0,a,b],
-                        [0,0,0,zback]])
-proj3d.persp_transformation = orthogonal_proj
+
 
 class display():
     def __init__(self):
      self.COLORS=[color.red , color.yellow , color.green, color.purple , color.blue 	, color.cyan 	, color.orange 	, color.magenta ,color.orange, color.black	 ]
-     self.C=[]
-     self.C2=[]
+     self.crystal_lattice=[]
+     self.arrows=[]
+     self.atomic_balls=[]
+     self.scene=()
      self.A=10 #amplitude. The displacement is multiplied by A
     def draw_lattice(self,crystal,crystal_primitive):
-        self.C,self.C2=func.draw_lattice(crystal,crystal_primitive)    
+        self.crystal_lattice=func.draw_lattice(crystal,crystal_primitive)    
     def set_scene(self,crystal):
-        func.set_scene(crystal)
+        self.scene=func.set_scene(crystal)
     def set_coord_system(self,alat):
         func.set_coord_system(alat)
     def draw_equilibrium_atoms(self,equil_atoms):
-        func.draw_equilibrium_atoms(equil_atoms,self.COLORS)    
-    def draw_displacement_arrows(self,equil_atoms,vib):
-        func.draw_displacement_arrows(equil_atoms,vib,self.A,self.COLORS)    
+        self.atomic_balls=func.draw_equilibrium_atoms(equil_atoms,self.COLORS)   
+    def init_arrows(self,equil_atoms,vib):
+        self.arrows=func.init_arrows\
+                    (equil_atoms,vib,self.A,self.COLORS)     
+    def draw_displacement_arrows(self,atoms,vib,no_of_modes):
+        func.draw_displacement_arrows\
+                    (self.scene,self.arrows,atoms,vib,self.A,no_of_modes)    
 
 class inputs():
  def __init__(self):
@@ -73,8 +71,8 @@ class chosen_motion(motion):
        motion.__init__(self)
        self.freq=[]
        self.vib=[]
- def ask_which_mode(self):
-  self.vib,self.freq=func.ask_which_mode(self.Q,self.DISPL,self.FREQ,
+ def ask_which_q(self):
+  self.vib,self.freq=func.ask_which_q(self.Q,self.DISPL,self.FREQ,
        self.no_of_modes)
 
 
@@ -83,10 +81,11 @@ disp=display()
 crystal_system=system()
 crystal_system.ask_if_conv_cell()
 obj=chosen_motion()
-obj.if_conv_cell=crystal_system.if_conv_cell
 obj.read_freqs_and_displacements()
-obj.ask_which_mode()
+obj.ask_which_q()
+obj.if_conv_cell=0
 crystal_system.read_crystal_info()
+#obj.if_conv_cell=crystal_system.if_conv_cell
 #crystal_system.set_symm()
 crystal_system.move_atoms_to_cell()
 crystal_system.add_atoms_by_symmetry()
@@ -94,8 +93,8 @@ disp.set_scene(crystal_system.crystal)
 disp.set_coord_system(crystal_system.alat)
 disp.draw_lattice(crystal_system.crystal,crystal_system.crystal_primitive)
 disp.draw_equilibrium_atoms(crystal_system.atoms)
-disp.draw_displacement_arrows(crystal_system.atoms,obj.vib)
-
+disp.init_arrows(crystal_system.atoms,obj.vib[0])
+disp.draw_displacement_arrows(crystal_system.atoms,obj.vib,obj.no_of_modes)
 
 
 
