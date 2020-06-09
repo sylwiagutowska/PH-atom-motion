@@ -8,8 +8,8 @@ PRECIS=4
 def round_vec(v):
  return np.array([ round(i,PRECIS) for i in v])
 
-def read_crystal_info(file_scf_out, if_conv_cell):
-  crystal,crystal_primitive,atoms=[],[],[]
+def read_crystal_info(file_scf_out):
+  crystal_conv,crystal_primitive,atoms=[],[],[]
   try: h=open(file_scf_out,'r')
   except: 
    print('Couldnt find scf.out file. Copy it here')
@@ -38,10 +38,9 @@ def read_crystal_info(file_scf_out, if_conv_cell):
      tmpi=tmp[i].split()
      crystal_primitive.append(\
      round_vec([alat*float(tmpi[3]),alat*float(tmpi[4]),alat*float(tmpi[5])]))
-    if if_conv_cell==1 and ibrav in [1,2,3]:
-     crystal=np.array([alat*round_vec(m) for m in [[1,0,0],[0,1,0],[0,0,1]]])
-    else: crystal=crystal_primitive
-  return atoms,crystal,crystal_primitive,alat
+    crystal_primitive=np.array(crystal_primitive)
+    crystal_conv=np.array([alat*round_vec(m) for m in [[1,0,0],[0,1,0],[0,0,1]]])
+  return atoms,crystal_conv,crystal_primitive,alat
 
 def move_one_atom_to_cell(atom_pos,crystal):
  cry=np.linalg.inv(np.transpose(crystal))
@@ -79,10 +78,7 @@ def add_atoms_by_symmetry(atoms,crystal,crystal_primitive):
     atoms.append(k)
  return atoms
 
-def ask_if_conv_cell():
- try: if_conv_cell=int(raw_input('Display primitive [0] or conventional cell [1]?'))
- except: if_conv_cell=int(input('Display primitive [0] or conventional cell [1]?'))
- return if_conv_cell
+
 
 def read_freqs_and_displacements(file_matdyn_modes):
  DISPL=[]
@@ -191,6 +187,30 @@ def set_scene(crystal):
 # distant_light(direction=vector(0.88, 0.22, 0.44),       color=color.gray(0.3))]
 
 
+def legend(atoms,COLORS): 
+ scene=canvas(width=900,height=60,background=color.white)
+ scene.parallel_projection = True
+ scene.center=vector(0.5,0,0)
+ scene.camera.pos=vector(0.5,0,-.25)
+ scene.stereo = 'active'
+ scene.stereodepth = 0
+ scene.append_to_caption('\n')
+ label(pos=vector(-1,0,0),text='Legend',box=False) 
+ legend_atoms=[]
+ for i in atoms:
+  sign=0
+  for j in legend_atoms:
+   if i[2]==j[2]:
+    sign=1
+    break
+  if sign==0: legend_atoms.append(i)
+ scene.center=vector(int(len(legend_atoms)/2)*0.2-0.1,0,0)
+ scene.camera.pos=vector(int(len(legend_atoms)/2)*0.2-0.1,0,-2)
+ atom_bals=[ sphere(pos=vector(numi*0.2-0.1,0,0), radius=0.06,color=COLORS[i[2]]) \
+        for numi,i in enumerate(legend_atoms)]
+ atom_labels=[ label(pos=vector(numi*0.2-.1,-.2,0),\
+                    text=i[0],box=False) \
+        for numi,i in enumerate(legend_atoms)]
 
 def set_coord_system(alat):
  coord_sys=[\
