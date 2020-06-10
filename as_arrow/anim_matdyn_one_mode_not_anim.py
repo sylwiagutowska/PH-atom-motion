@@ -12,23 +12,23 @@ class display():
      self.scene=()
      self.A=10 #amplitude. The displacement is multiplied by A
     def set_scene(self,crystal):
-        self.scene=func.set_scene(crystal)
+        self.scene=func.set_scene(crystal[:])
     def set_coord_system(self,alat):
         func.set_coord_system(alat)
     def draw_lattice(self,crystal,crystal_primitive):
-        self.crystal_lattice=func.draw_lattice(crystal,crystal_primitive)    
+        self.crystal_lattice=func.draw_lattice(crystal[:],crystal_primitive[:])    
     def draw_equilibrium_atoms(self,equil_atoms):
-        self.atomic_balls=func.draw_equilibrium_atoms(equil_atoms,self.COLORS)   
+        self.atomic_balls=func.draw_equilibrium_atoms(equil_atoms[:],self.COLORS[:])   
     def init_arrows(self,equil_atoms,vib):
         self.arrows=func.init_arrows\
-                    (equil_atoms,vib,self.A,self.COLORS)     
+                    (equil_atoms[:],vib,self.A,self.COLORS[:])     
     def draw_displacement_arrows(self,atoms,vib,no_of_modes):
         func.draw_displacement_arrows\
-                    (self.scene,self.arrows,atoms,vib,self.A,no_of_modes)    
+                    (self.scene,self.arrows[:],atoms[:],vib[:],self.A,no_of_modes)    
     def draw_atomic_bondings(self,equil_atoms):
-        self.atomic_bondings=func.draw_atomic_bondings(equil_atoms)
+        self.atomic_bondings=func.draw_atomic_bondings(equil_atoms[:])
     def legend(self,atoms):
-        func.legend(atoms[:],self.COLORS)
+        func.legend(atoms[:],self.COLORS[:])
 
 class inputs():
  def __init__(self):
@@ -51,12 +51,12 @@ class system(inputs):
 # def set_symm(self):
 #  self.SYMM_OP= func.set_sym_bl(self.crystal_primitive)
  def move_atoms_to_cell(self):
-  self.atoms=func.move_atoms_to_cell(self.atoms,self.crystal)
+  self.atoms=func.move_atoms_to_cell(self.atoms[:],self.crystal[:])
  def add_atoms_by_symmetry(self):
-  self.atoms=func.add_atoms_by_symmetry(self.atoms,\
-             self.crystal,self.crystal_primitive)
+  self.atoms=func.add_atoms_by_symmetry(self.atoms[:],\
+             self.crystal[:],self.crystal_primitive[:])
  def make_conventional_cell(self):
-  self.crystal=func.make_conv_cell(self.ibrav,self.crystal_primitive,self.celldm)
+  self.crystal=func.make_conv_cell(self.ibrav,self.crystal_primitive[:],self.celldm[:])
 
 
 
@@ -76,7 +76,7 @@ class chosen_motion(motion):
        self.freq=[]
        self.vib=[]
  def ask_which_q(self):
-  self.vib,self.freq=func.ask_which_q(self.Q,self.DISPL,self.FREQ,
+  self.vib,self.freq=func.ask_which_q(self.Q,self.DISPL[:],self.FREQ[:],
        self.no_of_modes)
 
 
