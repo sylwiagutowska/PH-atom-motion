@@ -4,6 +4,7 @@ import numpy as np
 
 eps1=1e-4
 PRECIS=4
+eps2=1e-2
 
 def round_vec(v):
  return np.array([ round(i,PRECIS) for i in v])
@@ -69,17 +70,16 @@ def move_atoms_to_cell(atoms2,crystal):
 
 
 def add_atoms_by_symmetry(atoms,crystal,crystal_primitive):
- #add atom at the faces
- pm=[-1.,0.,1.]
+ pm=[-1.,0.,1.,-2,2.,-3.,3.]
  cr=[round_vec(h*crystal_primitive[0]+k*crystal_primitive[1]+l*crystal_primitive[2]) for h in pm for k in pm for l in pm if not (h==0 and k==0 and l==0)]
- for i in atoms[:len(atoms)]:
+ for i in atoms[:]:
   for e in cr:
    j= move_one_atom_to_cell(i[1]+e,crystal)
    sign=0
    for i2 in atoms:
-    if abs(j[0]-i2[1][0])<eps1 and  abs(j[1]-i2[1][1])<eps1 and  abs(j[2]-i2[1][2])<eps1:
-     sign=1
-     break
+     if abs(j[0]-i2[1][0])<eps2 and  abs(j[1]-i2[1][1])<eps2 and  abs(j[2]-i2[1][2])<eps2:
+       sign=1
+       break
    if sign==0:
     k=i[:]
     k[1]=j
@@ -88,7 +88,7 @@ def add_atoms_by_symmetry(atoms,crystal,crystal_primitive):
 
 def make_conv_cell(ibrav,crystal_primitive,celldm):
  cart=[round_vec(m) for m in [[1,0,0],[0,1,0],[0,0,1]]]
- if ibrav in [1,2,3]: crystal_conv=np.array([round_vec(alat*m) for m in cart])
+ if ibrav in [1,2,3]: crystal_conv=np.array([round_vec(celldm[0]*m) for m in cart])
  elif ibrav in [4,6,8]: crystal_conv=crystal_primitive[:]
  elif ibrav in [9]:  crystal_conv=np.array([round_vec(celldm[m]*cart[m]) for m in range(3)])
  return crystal_conv
@@ -215,9 +215,10 @@ def draw_lattice(crystal,crystal2):
 
 
 def draw_equilibrium_atoms(atoms,COLORS):
- at1_equil=[ sphere(pos=make_vector(i[1]),\
+ at_equil=[ sphere(pos=make_vector(i[1]),\
                     radius=0.7,color=COLORS[i[2]]) \
         for i in (atoms)]
+ return at_equil
 
 def init_arrows(atoms,vib,A,COLORS):
  arrows=[]
@@ -273,7 +274,7 @@ def draw_atomic_bondings(atoms):
   min_dist=min([j[0] for j in dist if j[0]>1e-1])
   for numj, j in enumerate(dist):
    if abs(j[0]-min_dist)<1e-1: mini.append(j)
- atomic_bondings=[curve(make_vector(i[1][1]),make_vector(i[2][1])) for i in mini]
+ atomic_bondings=[curve(make_vector(i[1][1]),make_vector(i[2][1]),radius=.05) for i in mini]
  def E(b):
   if atomic_bondings[0].visible==False: 
    for i in atomic_bondings:
@@ -284,7 +285,11 @@ def draw_atomic_bondings(atoms):
  but=button( bind=E, text='bondings on/off',height=100)
  return atomic_bondings
 
- 
+#def change_atom_color(COLORS, atoms,moving_atoms,atomic_balls):
+#def E(b):
+#  if atomic_bondings[0].visible==False: 
+#   for i in atomic_bondings:
+#    i.visible = True
 
 def legend(atoms,COLORS): 
  scene=canvas(width=900,height=60,background=color.white)
