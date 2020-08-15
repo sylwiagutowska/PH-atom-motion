@@ -1,0 +1,15 @@
+ &input
+    asr='crystal', la2F=.true.
+    flfrc='libi.fc',  flfrq='matdyn.freq',
+q_in_band_form=.true.
+ /
+9
+A 50
+X 50
+gG 50
+Z 50
+A 50
+gG 50
+R 50 
+M 50
+Z 50
