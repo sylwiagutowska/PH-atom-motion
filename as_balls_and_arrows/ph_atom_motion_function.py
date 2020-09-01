@@ -91,6 +91,9 @@ def make_conv_cell(ibrav,crystal_primitive,celldm):
  if ibrav in [1,2,3]: crystal_conv=np.array([round_vec(celldm[0]*m) for m in cart])
  elif ibrav in [4,6,8]: crystal_conv=crystal_primitive[:]
  elif ibrav in [9]:  crystal_conv=np.array([round_vec(celldm[m]*cart[m]) for m in range(3)])
+ elif ibrav==5: 
+  M=np.array([[-1.,1.,0.],[1.,0.,-1.],[1.,1.,1.]])
+  crystal_conv=np.dot(M,np.array(crystal_primitive))
  return crystal_conv
 
 
