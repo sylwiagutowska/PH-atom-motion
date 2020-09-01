@@ -70,7 +70,7 @@ def move_atoms_to_cell(atoms2,crystal):
 
 
 def add_atoms_by_symmetry(atoms,crystal,crystal_primitive):
- pm=[-1.,0.,1.,-2,2.,-3.,3.]
+ pm=[-1.,0.,1.,-2.,2.,-3.,3.]
  cr=[round_vec(h*crystal_primitive[0]+k*crystal_primitive[1]+l*crystal_primitive[2]) for h in pm for k in pm for l in pm if not (h==0 and k==0 and l==0)]
  for i in atoms[:]:
   for e in cr:
@@ -258,13 +258,13 @@ def draw_displacement_arrows(scene,arrows,moving_atoms,atoms,vib,freq,A,no_of_mo
  moving_atoms_button=radio(bind=G,text="moving atoms on/off")
  #arrows
  def F(b):
-  m=int(b.text)
+  m=int(b.text)-1
   for numi,i in enumerate(atoms):
    arrows[numi].axis=make_vector(A*vib[m][i[2]])
    moving_atoms[0]=m
  scene.append_to_caption('\nChooose no of mode:\n')
  for k in [i for i in range(no_of_modes)]:
-  mode_buttons.append(button( bind=F , text=str(k),height=100))
+  mode_buttons.append(button( bind=F , text=str(k+1),height=100))
 
 
 def draw_atomic_bondings(atoms): 
