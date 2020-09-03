@@ -146,6 +146,7 @@ def set_scene(crystal):
  scene.autocenter=0.5*(crystal_vec[0]+crystal_vec[1]+crystal_vec[2])
  scene.stereo = 'active'
  scene.stereodepth = 0
+ scene.fov=0.001
  default_camera_pos=scene.camera.pos
  def B1(b):
     scene.camera.pos-=0.1*(scene.camera.pos-scene.center)
