@@ -12,10 +12,11 @@ class display():
      self.moving_atoms=[]
      self.scene=()
      self.A=10 #amplitude. The displacement is multiplied by A
+     self.coord_system=[]
     def set_scene(self,crystal):
         self.scene=func.set_scene(crystal[:])
     def set_coord_system(self,alat):
-        func.set_coord_system(alat)
+         self.coord_system=func.set_coord_system(alat,self.scene)
     def draw_lattice(self,crystal,crystal_primitive):
         self.crystal_lattice=func.draw_lattice(crystal[:],crystal_primitive[:])    
     def draw_equilibrium_atoms(self,equil_atoms):
@@ -35,6 +36,10 @@ class display():
         self.atomic_bondings=func.draw_atomic_bondings(equil_atoms[:])
     def legend(self,atoms):
         func.legend(atoms[:],self.COLORS[:])
+    def choose_color(self,irr_atoms,atoms):
+        func.choose_color(irr_atoms,atoms,\
+                  self.atomic_balls,self.moving_atoms,self.arrows,\
+                  self.scene,self.COLORS[:])
 
 class inputs():
  def __init__(self):
@@ -92,6 +97,7 @@ disp=display()
 #primitive cell
 crystal_system=system()
 crystal_system.read_crystal_info()
+irr_atoms=crystal_system.atoms
 crystal_system.crystal=crystal_system.crystal_primitive
 obj=chosen_motion()
 obj.read_freqs_and_displacements()
@@ -122,6 +128,6 @@ disp2.draw_lattice(crystal_system_conv.crystal,crystal_system_conv.crystal_primi
 disp2.draw_equilibrium_atoms(crystal_system_conv.atoms)
 disp2.init_arrows(crystal_system_conv.atoms,obj.vib[0])
 disp2.draw_displacement_arrows_and_balls(crystal_system_conv.atoms,obj.vib,obj.freq,obj.no_of_modes)
-
+disp2.choose_color(irr_atoms,crystal_system_conv.atoms)
 
 

@@ -184,7 +184,7 @@ def set_scene(crystal):
 # distant_light(direction=vector(0.88, 0.22, 0.44),       color=color.gray(0.3))]
 
 
-def set_coord_system(alat):
+def set_coord_system(alat,scene):
  coord_sys=[\
 arrow(pos=-vector(4*alat,0,0), axis=vector(alat,0,0),color=color.green),\
 arrow(pos=-vector(4*alat,0,0), axis=vector(0,alat,0),color=color.red),\
@@ -193,6 +193,18 @@ arrow(pos=-vector(4*alat,0,0), axis=vector(0,0,alat),color=color.blue)]
 label(pos=coord_sys[0].pos+coord_sys[0].axis,text='<b>x</b>',color=color.green,box=False),\
 label(pos=coord_sys[1].pos+coord_sys[1].axis,text='<b>y</b>',color=color.red,box=False),\
 label(pos=coord_sys[2].pos+coord_sys[2].axis,text='<b>z</b>',color=color.blue,box=False)]
+ coord_system=[coord_sys,coord_sys_lab]
+ def D(b):
+    for i in coord_system:
+     if i[0].visible==True:
+      for j in i:
+       j.visible=False
+     else:  
+      for j in i:
+       j.visible=True
+ scene.append_to_caption('\n')
+ but=button( bind=D, text='Coord.sys.',height=100)
+ scene.append_to_caption('\n')
 
 def draw_lattice(crystal,crystal2):
  C=[np.array([0,0,0]), crystal[0],crystal[0]+crystal[1],\
@@ -319,3 +331,32 @@ def legend(atoms,COLORS):
  atom_labels=[ label(pos=vector(numi*0.25-.1,-.2,0),\
                     text=i[0],box=False) \
         for numi,i in enumerate(legend_atoms)]
+
+def choose_color(atoms,all_atoms,balls,moving_atoms,arrows,scene,COLORS):
+ color_buttons=[]
+ names=[]
+ scene.append_to_caption('\nChooose color of atoms :\n')
+ for i in COLORS:
+   if i.x!=0 and i.y==0 and i.z==0: name='red'+str(i.x)
+   elif i.x!=0 and i.x==i.y and i.z==0: name='yellow'+str(i.y)
+   elif i==vector(0,0,0): name='black'
+   elif i.x==0 and i.y!=0 and i.z==0: name='green'+str(i.y)
+   elif i==vector(1,0.6,0): name='orange'
+   elif i==vector(1,1,1): name='white'
+   elif i.x==0 and i.y==0 and i.z!=0: name='blue'+str(i.z) 
+   elif i==vector(0,1,1): name='cyan' 	 
+   elif i==vector(0.4,0.2,0.6): name='purple'
+   elif i==vector(1,0,1): name='magenta'
+   elif i.x==i.y and i.y==i.z: name='gray'+str(i.x)
+   else: name=str(i.x)+' '+str(i.y)+' '+str(i.z)
+   names.append(name)
+ def F(b):
+  m=int(b.text)
+  for numi,i in enumerate(all_atoms):
+   if i[2]==m: 
+    balls[numi].color=COLORS[b.index]
+    moving_atoms[1][numi].color=COLORS[b.index]
+    arrows[numi].color=COLORS[b.index]
+ for k in range(len(atoms)):
+  color_buttons.append(menu( bind=F, text=str(k), height=100,\
+                choices=names, selected=names[k]))
