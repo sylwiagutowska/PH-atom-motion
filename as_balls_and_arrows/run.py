@@ -5,7 +5,8 @@ import ph_atom_motion_function as func
 
 class display():
     def __init__(self):
-     self.COLORS=[color.red , color.yellow , color.green, color.purple , color.blue 	, color.cyan 	, color.orange 	, color.magenta ,color.orange, color.black	 ]
+     self.COLORS=[color.red , color.yellow , color.green, color.purple , color.blue 	, color.cyan 	, color.orange 	, color.magenta ,color.orange, color.black,\
+color.gray(0.9),color.gray(0.8),color.gray(0.7),color.gray(0.6)	 ]
      self.crystal_lattice=[]
      self.arrows=[]
      self.atomic_balls=[]
@@ -40,6 +41,8 @@ class display():
         func.choose_color(irr_atoms,atoms,\
                   self.atomic_balls,self.moving_atoms,self.arrows,\
                   self.scene,self.COLORS[:])
+    def if_display_tetrahedrons(self,atoms):
+        func.if_display_tetrahedrons(atoms,self.COLORS,self.scene)
 
 class inputs():
  def __init__(self):
@@ -127,6 +130,7 @@ disp2.set_coord_system(crystal_system_conv.alat)
 disp2.draw_lattice(crystal_system_conv.crystal,crystal_system_conv.crystal_primitive)
 disp2.draw_equilibrium_atoms(crystal_system_conv.atoms)
 disp2.init_arrows(crystal_system_conv.atoms,obj.vib[0])
+disp2.if_display_tetrahedrons(crystal_system_conv.atoms)
 disp2.draw_displacement_arrows_and_balls(crystal_system_conv.atoms,obj.vib,obj.freq,obj.no_of_modes)
 disp2.choose_color(irr_atoms,crystal_system_conv.atoms)
 

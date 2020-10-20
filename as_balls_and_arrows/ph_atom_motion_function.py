@@ -202,9 +202,8 @@ label(pos=coord_sys[2].pos+coord_sys[2].axis,text='<b>z</b>',color=color.blue,bo
      else:  
       for j in i:
        j.visible=True
- scene.append_to_caption('\n')
  but=button( bind=D, text='Coord.sys.',height=100)
- scene.append_to_caption('\n')
+
 
 def draw_lattice(crystal,crystal2):
  C=[np.array([0,0,0]), crystal[0],crystal[0]+crystal[1],\
@@ -267,8 +266,8 @@ def draw_displacement_arrows(scene,arrows,moving_atoms,atoms,vib,freq,A,no_of_mo
     for numi,i in enumerate(arrows):
      moving_atoms[1][numi].pos=(i.pos+(i.axis*sin(freq[moving_atoms[0]]*t)))
     t+=dt  
- scene.append_to_caption('\n')
- moving_atoms_button=radio(bind=G,text="moving atoms on/off")
+   
+ moving_atoms_button=button(bind=G,text="moving atoms on/off")
  #arrows
  def F(b):
   m=int(b.text)-1
@@ -311,6 +310,7 @@ def legend(atoms,COLORS):
  scene=canvas(width=900,height=60,background=color.white)
  scene.parallel_projection = True
  scene.center=vector(0.5,0,0)
+ scene.fov=0.001
  scene.camera.pos=vector(0.5,0,-.25)
  scene.stereo = 'active'
  scene.stereodepth = 0
@@ -326,9 +326,9 @@ def legend(atoms,COLORS):
   if sign==0: legend_atoms.append(i)
  scene.center=vector(int(len(legend_atoms)/2)*0.25-0.1,0,0)
  scene.camera.pos=vector(int(len(legend_atoms)/2)*0.25-0.1,0,-2)
- atom_bals=[ sphere(pos=vector(numi*0.25-0.1,0,0), radius=0.06,color=COLORS[i[2]]) \
+ atom_bals=[ sphere(pos=vector(numi*0.25-0.1,0,0), radius=0.04,color=COLORS[i[2]]) \
         for numi,i in enumerate(legend_atoms)]
- atom_labels=[ label(pos=vector(numi*0.25-.1,-.2,0),\
+ atom_labels=[ label(pos=vector(numi*0.25-.1,-.1,0),\
                     text=i[0],box=False) \
         for numi,i in enumerate(legend_atoms)]
 
@@ -360,3 +360,62 @@ def choose_color(atoms,all_atoms,balls,moving_atoms,arrows,scene,COLORS):
  for k in range(len(atoms)):
   color_buttons.append(menu( bind=F, text=str(k), height=100,\
                 choices=names, selected=names[k]))
+
+
+def make_tetrahedrons(atoms,COLORS,scene):
+ tetrahedrons=[]
+ at_pos=[ make_vector(at[1]) for at in atoms]
+ tetra=[]
+ for numi,i in enumerate(atoms):
+  dist=[]
+  mini=[]
+  for numj,j in enumerate(atoms[numi+1:]):
+   dist.append([(sum([m**2 for m in i[1]-j[1]]))**0.5,i,j])
+  if len(dist)==0: continue
+  min_dist=min([j[0] for j in dist if j[0]>1e-1])
+  if min_dist>5.5: continue
+  for numj, j in enumerate(dist):
+   if abs(j[0]-min_dist)<1e-1: mini.append(j)
+  for numj, j in enumerate(mini):
+   for numk, k in enumerate(mini[numj+1:]):
+    if abs((sum([m**2 for m in j[2][1]-k[2][1]]))**0.5-min_dist)<1e-1: 
+     for numl, l in enumerate(mini[numk+1:]):
+      if abs((sum([m**2 for m in l[2][1]-k[2][1]]))**0.5-min_dist)<1e-1 \
+         and abs((sum([m**2 for m in l[2][1]-j[2][1]]))**0.5-min_dist)<1e-1: 
+       tetra.append([j[1],j[2],k[2],l[2]])
+ print(len(tetra))
+ for i in tetra:
+  if len(i)<4: continue
+  ats=[vertex(pos=make_vector(j[1]),opacity=.5,color=COLORS[j[2]]) for j in i[:4]]
+  tetrahedrons.append([triangle(v0=ats[0],v1=ats[1],v2=ats[2]),\
+                       triangle(v0=ats[0],v1=ats[2],v2=ats[3]),\
+                       triangle(v0=ats[1],v1=ats[2],v2=ats[3]),curve()])
+  for i in ats: tetrahedrons[-1][-1].append(i.pos)
+  tetrahedrons[-1][-1].append(ats[0].pos)
+
+ def G(b):
+  if b.text=='all on':
+   for i in tetrahedrons: 
+     for j in i: j.visible=True 
+  elif b.text=='all off':
+   for i in tetrahedrons: 
+     for j in i: j.visible=False
+  else:
+   m=int(b.text)-1
+   if tetrahedrons[m][0].visible==True:
+    for i in tetrahedrons[m]: i.visible=False
+   else:
+    for i in tetrahedrons[m]: i.visible=True
+
+ scene.append_to_caption('\nChooose tetrahedron :\n')
+ tetra_buttons=[button( bind=G , text='all on',height=100),button( bind=G , text='all off',height=100)]
+ for k in range(len(tetrahedrons)):
+  tetra_buttons.append(button( bind=G , text=str(k+1),height=100))
+
+def if_display_tetrahedrons(atoms,COLORS,scene):
+ def F(b):
+  if b.checked: make_tetrahedrons(atoms,COLORS,scene)
+ checkbox(text='tetrahedrons', bind=F)
+ 
+
+
