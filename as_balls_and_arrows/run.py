@@ -14,6 +14,7 @@ color.gray(0.9),color.gray(0.8),color.gray(0.7),color.gray(0.6)	 ]
      self.scene=()
      self.A=10 #amplitude. The displacement is multiplied by A
      self.coord_system=[]
+     self.tetrahedrons=[]
     def set_scene(self,crystal):
         self.scene=func.set_scene(crystal[:])
     def set_coord_system(self,alat):
@@ -42,7 +43,9 @@ color.gray(0.9),color.gray(0.8),color.gray(0.7),color.gray(0.6)	 ]
                   self.atomic_balls,self.moving_atoms,self.arrows,\
                   self.scene,self.COLORS[:])
     def if_display_tetrahedrons(self,atoms):
-        func.if_display_tetrahedrons(atoms,self.COLORS,self.scene)
+        func.if_display_tetrahedrons(atoms,self.COLORS,self.scene,self.tetrahedrons)
+    def add_plane(self,alat):
+        func.add_plane(alat)
 
 class inputs():
  def __init__(self):
@@ -89,8 +92,9 @@ class chosen_motion(motion):
        motion.__init__(self)
        self.freq=[]
        self.vib=[]
+       self.q=[]
  def ask_which_q(self):
-  self.vib,self.freq=func.ask_which_q(self.Q,self.DISPL[:],self.FREQ[:],
+  self.vib,self.freq,self.q=func.ask_which_q(self.Q,self.DISPL[:],self.FREQ[:],
        self.no_of_modes)
 
 
@@ -113,7 +117,9 @@ disp.set_coord_system(crystal_system.alat)
 disp.draw_lattice(crystal_system.crystal,crystal_system.crystal_primitive)
 disp.draw_equilibrium_atoms(crystal_system.atoms)
 disp.init_arrows(crystal_system.atoms,obj.vib[0])
+disp.if_display_tetrahedrons(crystal_system.atoms)
 disp.draw_displacement_arrows_and_balls(crystal_system.atoms,obj.vib,obj.freq,obj.no_of_modes)
+disp.choose_color(irr_atoms,crystal_system.atoms)
 
 #legend
 disp.legend(crystal_system.atoms)
@@ -133,5 +139,5 @@ disp2.init_arrows(crystal_system_conv.atoms,obj.vib[0])
 disp2.if_display_tetrahedrons(crystal_system_conv.atoms)
 disp2.draw_displacement_arrows_and_balls(crystal_system_conv.atoms,obj.vib,obj.freq,obj.no_of_modes)
 disp2.choose_color(irr_atoms,crystal_system_conv.atoms)
-
+disp.add_plane(crystal_system_conv.alat)
 

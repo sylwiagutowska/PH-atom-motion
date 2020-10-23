@@ -123,18 +123,17 @@ def read_freqs_and_displacements(file_matdyn_modes):
     i=i+1
   i=i+3
  for i in range(len(Q)):
-  print( i,Q[i],),
+  print( i,Q[i][:-1]),
  no_of_modes=len(FREQ[-1])
  return DISPL,FREQ,Q,no_of_modes
 
 def ask_which_q(Q,DISPL,FREQ,no_of_modes):
  nq=input( 'I listed qs calculated by matdyn. which one you want to visualize? Write  the number 0 -'+str((len(Q)-1))+':    ')
  nq=int(nq)
- #nmode=input( 'Which mode you want to visualize? Write the number 0 -'+str((no_of_modes-1))+':    ')
- #nmode=int(nmode)
+ q=Q[nq]
  vib=DISPL[nq] #[nmode]
  freq=FREQ[nq]
- return vib,freq 
+ return vib,freq,q 
 
 
 
@@ -254,7 +253,6 @@ def draw_displacement_arrows(scene,arrows,moving_atoms,atoms,vib,freq,A,no_of_mo
  #moving atoms
  def G(b):
    t,dt=0,0.05
-   print(b)
    if b.checked==False:
     for i in moving_atoms[1]: 
      i.clear_trail() 
@@ -362,10 +360,13 @@ def choose_color(atoms,all_atoms,balls,moving_atoms,arrows,scene,COLORS):
                 choices=names, selected=names[k]))
 
 
-def make_tetrahedrons(atoms,COLORS,scene):
- tetrahedrons=[]
+def make_tetrahedrons(atoms,COLORS,scene,tetrahedrons,maxbonding):
  at_pos=[ make_vector(at[1]) for at in atoms]
  tetra=[]
+ for i in tetrahedrons:
+  for j in i:  
+   j.visible=False
+   del j
  for numi,i in enumerate(atoms):
   dist=[]
   mini=[]
@@ -373,7 +374,7 @@ def make_tetrahedrons(atoms,COLORS,scene):
    dist.append([(sum([m**2 for m in i[1]-j[1]]))**0.5,i,j])
   if len(dist)==0: continue
   min_dist=min([j[0] for j in dist if j[0]>1e-1])
-  if min_dist>5.5: continue
+  if min_dist>maxbonding: continue
   for numj, j in enumerate(dist):
    if abs(j[0]-min_dist)<1e-1: mini.append(j)
   for numj, j in enumerate(mini):
@@ -386,14 +387,19 @@ def make_tetrahedrons(atoms,COLORS,scene):
  print(len(tetra))
  for i in tetra:
   if len(i)<4: continue
-  ats=[vertex(pos=make_vector(j[1]),opacity=.5,color=COLORS[j[2]]) for j in i[:4]]
+  ats=[vertex(pos=make_vector(j[1]),opacity=.5,color=COLORS[j[2]],canvas=scene) for j in i[:4]]
   tetrahedrons.append([triangle(v0=ats[0],v1=ats[1],v2=ats[2]),\
                        triangle(v0=ats[0],v1=ats[2],v2=ats[3]),\
-                       triangle(v0=ats[1],v1=ats[2],v2=ats[3]),curve()])
+                       triangle(v0=ats[1],v1=ats[2],v2=ats[3]),curve(canvas=scene)])
   for i in ats: tetrahedrons[-1][-1].append(i.pos)
   tetrahedrons[-1][-1].append(ats[0].pos)
 
- def G(b):
+
+def tetrahedrons_menu(atoms,COLORS,scene,tetrahedrons):
+ maxbonding=10.0
+ make_tetrahedrons(atoms,COLORS,scene,tetrahedrons,maxbonding)
+ 
+ def G(b): 
   if b.text=='all on':
    for i in tetrahedrons: 
      for j in i: j.visible=True 
@@ -407,15 +413,42 @@ def make_tetrahedrons(atoms,COLORS,scene):
    else:
     for i in tetrahedrons[m]: i.visible=True
 
- scene.append_to_caption('\nChooose tetrahedron :\n')
- tetra_buttons=[button( bind=G , text='all on',height=100),button( bind=G , text='all off',height=100)]
- for k in range(len(tetrahedrons)):
-  tetra_buttons.append(button( bind=G , text=str(k+1),height=100))
-
-def if_display_tetrahedrons(atoms,COLORS,scene):
  def F(b):
-  if b.checked: make_tetrahedrons(atoms,COLORS,scene)
- checkbox(text='tetrahedrons', bind=F)
+  maxbonding=float(b.text)  
+  make_tetrahedrons(atoms,COLORS,scene,tetrahedrons,maxbonding)
+
+ scene.append_to_caption('\nChooose maxbonding and tetrahedron :\n')
+ winput(text=maxbonding, prompt='Type maxbonding',bind=F,canvas=scene)
+ tetra_buttons=[button( bind=G , text='all on',height=100,canvas=scene),button( bind=G , text='all off',height=100,canvas=scene)]
+ for k in range(len(tetrahedrons)):
+  tetra_buttons.append(button( bind=G , text=str(k+1),height=100,canvas=scene))
+
+def if_display_tetrahedrons(atoms,COLORS,scene,tetrahedrons):
+ def F(b):
+  if b.checked: tetrahedrons_menu(atoms,COLORS,scene,tetrahedrons)
+ checkbox(text='tetrahedrons menu', bind=F)
  
-
-
+def add_plane(alat):
+ try:
+  h=open('plane.in')
+  tmp=h.readlines()
+  h.close()
+  line=tmp[0]
+  filename=tmp[1].split()[0]
+  if '1 1 0' in line: #przekatna
+   rt = shapes.rectangle(width=alat*(2**0.5), height=alat)
+   v=vector(.5*alat,.5*alat,.5*alat)
+   extrusion(shape=rt, path=[v,v+vector(0.1,0.,0.1)],texture=filename)
+  elif '1 1 1' in line: #[111]
+   rt = shapes.triangle(length=alat*(2**0.5),rotate=pi/2-pi/6)
+   v=vector(.33*alat,2/3.*alat,.33*alat)
+   extrusion(shape=rt, path=[v,v+vector(0.1,-0.1,0.1)], texture=filename)
+  elif '1 0 0 center' in line: #sciana w srodku
+   rt = shapes.rectangle(width=alat, height=alat)
+   v=vector(.5*alat,.5*alat,.5*alat)
+   extrusion(shape=rt, path=[v,v+vector(0.1,0.,0.)], texture='tot_pot.png')
+  elif '1 0 0 face' in line: #sciana
+   rt = shapes.rectangle(width=alat, height=alat)
+   v=vector(0,.5*alat,.5*alat)
+   extrusion(shape=rt, path=[v,v+vector(0.1,0.,0.)], texture='tot_pot.png')
+ except: 1
