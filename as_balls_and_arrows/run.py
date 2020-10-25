@@ -7,7 +7,7 @@ class display():
     def __init__(self):
      self.COLORS=[color.red , color.yellow , color.green, color.purple , color.blue 	, color.cyan 	, color.orange 	, color.magenta ,color.orange, color.black,\
 color.gray(0.9),color.gray(0.8),color.gray(0.7),color.gray(0.6)	 ]
-     self.crystal_lattice=[]
+     self.crystal_lattice=None
      self.arrows=[]
      self.atomic_balls=[]
      self.moving_atoms=[]
@@ -16,7 +16,7 @@ color.gray(0.9),color.gray(0.8),color.gray(0.7),color.gray(0.6)	 ]
      self.coord_system=[]
      self.tetrahedrons=[]
     def set_scene(self,crystal):
-        self.scene=func.set_scene(crystal[:])
+        self.scene=func.set_scene(crystal[:],self)
     def set_coord_system(self,alat):
          self.coord_system=func.set_coord_system(alat,self.scene)
     def draw_lattice(self,crystal,crystal_primitive):
@@ -42,10 +42,13 @@ color.gray(0.9),color.gray(0.8),color.gray(0.7),color.gray(0.6)	 ]
         func.choose_color(irr_atoms,atoms,\
                   self.atomic_balls,self.moving_atoms,self.arrows,\
                   self.scene,self.COLORS[:])
-    def if_display_tetrahedrons(self,atoms):
-        func.if_display_tetrahedrons(atoms,self.COLORS,self.scene,self.tetrahedrons)
+    def if_display_tetrahedrons(self):
+        func.if_display_tetrahedrons(\
+                       self.atomic_balls,self.COLORS,self.scene,self.tetrahedrons)
     def add_plane(self,alat):
         func.add_plane(alat)
+    def rotate(self):
+        func.rotate(self)        
 
 class inputs():
  def __init__(self):
@@ -117,9 +120,10 @@ disp.set_coord_system(crystal_system.alat)
 disp.draw_lattice(crystal_system.crystal,crystal_system.crystal_primitive)
 disp.draw_equilibrium_atoms(crystal_system.atoms)
 disp.init_arrows(crystal_system.atoms,obj.vib[0])
-disp.if_display_tetrahedrons(crystal_system.atoms)
+#disp.if_display_tetrahedrons(crystal_system.atoms)
 disp.draw_displacement_arrows_and_balls(crystal_system.atoms,obj.vib,obj.freq,obj.no_of_modes)
 disp.choose_color(irr_atoms,crystal_system.atoms)
+
 
 #legend
 disp.legend(crystal_system.atoms)
@@ -136,8 +140,12 @@ disp2.set_coord_system(crystal_system_conv.alat)
 disp2.draw_lattice(crystal_system_conv.crystal,crystal_system_conv.crystal_primitive)
 disp2.draw_equilibrium_atoms(crystal_system_conv.atoms)
 disp2.init_arrows(crystal_system_conv.atoms,obj.vib[0])
-disp2.if_display_tetrahedrons(crystal_system_conv.atoms)
+disp2.if_display_tetrahedrons()
 disp2.draw_displacement_arrows_and_balls(crystal_system_conv.atoms,obj.vib,obj.freq,obj.no_of_modes)
 disp2.choose_color(irr_atoms,crystal_system_conv.atoms)
-disp.add_plane(crystal_system_conv.alat)
+disp2.add_plane(crystal_system_conv.alat)
+print(disp2.atomic_balls)
+#func.move_to_center(disp2,crystal_system_conv.crystal)
+#disp2.rotate()
+
 

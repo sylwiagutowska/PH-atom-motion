@@ -137,8 +137,9 @@ def ask_which_q(Q,DISPL,FREQ,no_of_modes):
 
 
 
-def set_scene(crystal):
+def set_scene(crystal,disp):
  crystal_vec=[ make_vector(i) for i in crystal]
+ centr=0.5*(crystal_vec[0]+crystal_vec[1]+crystal_vec[2])
  scene=canvas(width=900,height=450,background=color.white)
  scene.center=0.5*(crystal_vec[0]+crystal_vec[1]+crystal_vec[2])
  #scene.parallel_projection = True
@@ -153,25 +154,16 @@ def set_scene(crystal):
     scene.camera.pos+=0.1*(scene.camera.pos-scene.center)
  scene.append_to_caption('       ')
  def C1(b):
-    scene.camera.rotate(angle=-.1, axis=scene.up)
+    rotate(disp,np.pi/4,vec(0,0,1),centr)
  def C2(b):
-    scene.camera.rotate(angle=.1, axis=scene.up)
- def C3(b):
-    scene.camera.pos-=scene.up
- def C4(b):
-    scene.camera.pos+=scene.up
+    rotate(disp,np.pi/4,vec(1,0,0),centr)
+
 
  but=button( bind=B2, text='ZOOM-',height=100,value=0)
  but=button( bind=B1, text='ZOOM+',height=100,value=0)
  scene.append_to_caption('\n')
- scene.append_to_caption('       ')
- but=button( bind=C3, text='UP',height=100)
- scene.append_to_caption('\n')
- but=button( bind=C1, text='LEFT',height=100,value=0)
- but=button( bind=C2, text='RIGHT',height=100,value=0)
- scene.append_to_caption('\n')
- scene.append_to_caption('    ')
- but=button( bind=C4, text='DOWN',height=100)
+ but=button( bind=C1, text='ROTATE XY',height=100,value=0)
+ but=button( bind=C2, text='ROTATE YZ',height=100,value=0)
  scene.append_to_caption('\n')
  return scene
  #for i in range(no_of_modes):
@@ -224,7 +216,7 @@ def draw_lattice(crystal,crystal2):
  crystal_lattice=curve(color=color.black,radius=0.1)
  for i in C:
   crystal_lattice.append(make_vector(i))
- return C,C2
+ return crystal_lattice
 
 
 
@@ -243,7 +235,7 @@ def init_arrows(atoms,vib,A,COLORS):
                  fixedwidth=True, shaftwidth=0.4,\
                  color=COLORS[atoms[i[2]][2]],shininess=0.1))
    moving_atoms=[0,[ sphere(pos=make_vector(i[1]),\
-                    radius=0.7,color=COLORS[i[2]], make_trail=True) \
+                    radius=0.7,color=COLORS[i[2]], make_trail=True,visible=False) \
         for i in (atoms)]] #first element stands for no of mode
  return arrows,moving_atoms
 
@@ -264,8 +256,8 @@ def draw_displacement_arrows(scene,arrows,moving_atoms,atoms,vib,freq,A,no_of_mo
     for numi,i in enumerate(arrows):
      moving_atoms[1][numi].pos=(i.pos+(i.axis*sin(freq[moving_atoms[0]]*t)))
     t+=dt  
-   
- moving_atoms_button=button(bind=G,text="moving atoms on/off")
+
+ moving_atoms_button=radio(bind=G,text="moving atoms on/off")
  #arrows
  def F(b):
   m=int(b.text)-1
@@ -298,11 +290,6 @@ def draw_atomic_bondings(atoms):
  but=button( bind=E, text='bondings on/off',height=100)
  return atomic_bondings
 
-#def change_atom_color(COLORS, atoms,moving_atoms,atomic_balls):
-#def E(b):
-#  if atomic_bondings[0].visible==False: 
-#   for i in atomic_bondings:
-#    i.visible = True
 
 def legend(atoms,COLORS): 
  scene=canvas(width=900,height=60,background=color.white)
@@ -360,18 +347,18 @@ def choose_color(atoms,all_atoms,balls,moving_atoms,arrows,scene,COLORS):
                 choices=names, selected=names[k]))
 
 
-def make_tetrahedrons(atoms,COLORS,scene,tetrahedrons,maxbonding):
- at_pos=[ make_vector(at[1]) for at in atoms]
+def make_tetrahedrons(atoms_balls,COLORS,scene,tetrahedrons,maxbonding):
+ at_pos=[ at.pos for at in atoms_balls]
  tetra=[]
  for i in tetrahedrons:
   for j in i:  
    j.visible=False
    del j
- for numi,i in enumerate(atoms):
+ for numi,i in enumerate(atoms_balls):
   dist=[]
   mini=[]
-  for numj,j in enumerate(atoms[numi+1:]):
-   dist.append([(sum([m**2 for m in i[1]-j[1]]))**0.5,i,j])
+  for numj,j in enumerate(atoms_balls[numi+1:]):
+   dist.append([mag(i.pos-j.pos),i,j])
   if len(dist)==0: continue
   min_dist=min([j[0] for j in dist if j[0]>1e-1])
   if min_dist>maxbonding: continue
@@ -379,26 +366,26 @@ def make_tetrahedrons(atoms,COLORS,scene,tetrahedrons,maxbonding):
    if abs(j[0]-min_dist)<1e-1: mini.append(j)
   for numj, j in enumerate(mini):
    for numk, k in enumerate(mini[numj+1:]):
-    if abs((sum([m**2 for m in j[2][1]-k[2][1]]))**0.5-min_dist)<1e-1: 
+    if abs(mag(j[2].pos-k[2].pos)-min_dist)<1e-1: 
      for numl, l in enumerate(mini[numk+1:]):
-      if abs((sum([m**2 for m in l[2][1]-k[2][1]]))**0.5-min_dist)<1e-1 \
-         and abs((sum([m**2 for m in l[2][1]-j[2][1]]))**0.5-min_dist)<1e-1: 
+      if abs(mag(l[2].pos-k[2].pos)-min_dist)<1e-1 \
+         and abs(mag(l[2].pos-j[2].pos)-min_dist)<1e-1: 
        tetra.append([j[1],j[2],k[2],l[2]])
  print(len(tetra))
  for i in tetra:
   if len(i)<4: continue
-  ats=[vertex(pos=make_vector(j[1]),opacity=.5,color=COLORS[j[2]],canvas=scene) for j in i[:4]]
+  ats=[vertex(pos=j.pos,opacity=.5,color=j.color,canvas=scene) for j in i[:4]]
   tetrahedrons.append([triangle(v0=ats[0],v1=ats[1],v2=ats[2]),\
                        triangle(v0=ats[0],v1=ats[2],v2=ats[3]),\
                        triangle(v0=ats[1],v1=ats[2],v2=ats[3]),curve(canvas=scene)])
-  for i in ats: tetrahedrons[-1][-1].append(i.pos)
+  print (tetrahedrons)
+  for k in ats: tetrahedrons[-1][-1].append(k.pos)
   tetrahedrons[-1][-1].append(ats[0].pos)
 
 
-def tetrahedrons_menu(atoms,COLORS,scene,tetrahedrons):
+def tetrahedrons_menu(atoms_balls,COLORS,scene,tetrahedrons):
  maxbonding=10.0
- make_tetrahedrons(atoms,COLORS,scene,tetrahedrons,maxbonding)
- 
+ make_tetrahedrons(atoms_balls,COLORS,scene,tetrahedrons,maxbonding)
  def G(b): 
   if b.text=='all on':
    for i in tetrahedrons: 
@@ -415,7 +402,7 @@ def tetrahedrons_menu(atoms,COLORS,scene,tetrahedrons):
 
  def F(b):
   maxbonding=float(b.text)  
-  make_tetrahedrons(atoms,COLORS,scene,tetrahedrons,maxbonding)
+  make_tetrahedrons(atoms_balls,COLORS,scene,tetrahedrons,maxbonding)
 
  scene.append_to_caption('\nChooose maxbonding and tetrahedron :\n')
  winput(text=maxbonding, prompt='Type maxbonding',bind=F,canvas=scene)
@@ -423,10 +410,10 @@ def tetrahedrons_menu(atoms,COLORS,scene,tetrahedrons):
  for k in range(len(tetrahedrons)):
   tetra_buttons.append(button( bind=G , text=str(k+1),height=100,canvas=scene))
 
-def if_display_tetrahedrons(atoms,COLORS,scene,tetrahedrons):
+def if_display_tetrahedrons(atoms_balls,COLORS,scene,tetrahedrons):
  def F(b):
-  if b.checked: tetrahedrons_menu(atoms,COLORS,scene,tetrahedrons)
- checkbox(text='tetrahedrons menu', bind=F)
+  tetrahedrons_menu(atoms_balls,COLORS,scene,tetrahedrons)
+ button(text='tetrahedrons menu', bind=F)
  
 def add_plane(alat):
  try:
@@ -452,3 +439,51 @@ def add_plane(alat):
    v=vector(0,.5*alat,.5*alat)
    extrusion(shape=rt, path=[v,v+vector(0.1,0.,0.)], texture='tot_pot.png')
  except: 1
+
+def rotate_one_obj(obj,ang,ax,orig): 
+ obj.rotate(angle=ang,  axis=ax,  origin=orig)
+
+
+def rotate(disp,ang,ax,orig):
+ for v in vars(disp): 
+  try: 
+   rotate_one_obj(vars(disp)[v],ang,ax,orig)
+  except:
+   if type(vars(disp)[v]) is not list: continue 
+   for v1 in vars(disp)[v]:
+    try:
+     rotate_one_obj(v1,ang,ax,orig)
+    except:
+     if type(v1) is not list: continue
+     for v2 in v1:
+      try:
+       rotate_one_obj(v2,ang,ax,orig)
+      except: 
+       if type(v2) is not list: continue
+       for v3 in v2:
+        try:
+         rotate_one_obj(v3,ang,ax,orig)       
+        except: 1
+'''
+def move_to_center(disp,crystal):
+ o=0.5*(crystal[0]+crystal[1]+crystal[2])
+ for v in vars(disp): 
+  try: 
+   rotate_one_obj(vars(disp)[v],ang,ax)
+  except:
+   if type(vars(disp)[v]) is not list: continue 
+   for v1 in vars(disp)[v]:
+    try:
+     v1.pos=v1.pos+o
+    except:
+     if type(v1) is not list: continue
+     for v2 in v1:
+      try:
+       v2.pos=v2.pos+o
+      except: 
+       if type(v2) is not list: continue
+       for v3 in v2:
+        try:
+         v3.pos=v3.pos+o
+        except: 1
+'''
