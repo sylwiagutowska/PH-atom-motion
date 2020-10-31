@@ -139,7 +139,6 @@ def ask_which_q(Q,DISPL,FREQ,no_of_modes):
 
 def set_scene(crystal,disp):
  crystal_vec=[ make_vector(i) for i in crystal]
- centr=0.5*(crystal_vec[0]+crystal_vec[1]+crystal_vec[2])
  scene=canvas(width=900,height=450,background=color.white)
  scene.center=0.5*(crystal_vec[0]+crystal_vec[1]+crystal_vec[2])
  #scene.parallel_projection = True
@@ -154,10 +153,9 @@ def set_scene(crystal,disp):
     scene.camera.pos+=0.1*(scene.camera.pos-scene.center)
  scene.append_to_caption('       ')
  def C1(b):
-    rotate(disp,np.pi/4,vec(0,0,1),centr)
+    rotate(disp,np.pi/4,vec(0,0,1),scene.center)
  def C2(b):
-    rotate(disp,np.pi/4,vec(1,0,0),centr)
-
+    rotate(disp,np.pi/4,vec(1,0,0),scene.center)
 
  but=button( bind=B2, text='ZOOM-',height=100,value=0)
  but=button( bind=B1, text='ZOOM+',height=100,value=0)
@@ -260,13 +258,17 @@ def draw_displacement_arrows(scene,arrows,moving_atoms,atoms,vib,freq,A,no_of_mo
  moving_atoms_button=radio(bind=G,text="moving atoms on/off")
  #arrows
  def F(b):
-  m=int(b.text)-1
+  m=int(b.text.split('\n')[0])-1
   for numi,i in enumerate(atoms):
+   arrows[numi].visible=False
+   print(vib[m][i[2]])
    arrows[numi].axis=make_vector(A*vib[m][i[2]])
-   moving_atoms[0]=m
- scene.append_to_caption('\nChooose no of mode:\n')
- for k in [i for i in range(no_of_modes)]:
-  mode_buttons.append(button( bind=F , text=str(k+1),height=100))
+   arrows[numi].length=make_vector(A*vib[m][i[2]]).mag
+   arrows[numi].visible=True
+  moving_atoms[0]=m
+ scene.append_to_caption('\nChoose mode:\n')
+ for k in range(no_of_modes):
+  mode_buttons.append(button( bind=F , text=str(k+1)+'\n'+str(round(freq[k],2)),height=100))
 
 
 def draw_atomic_bondings(atoms): 
@@ -320,7 +322,7 @@ def legend(atoms,COLORS):
 def choose_color(atoms,all_atoms,balls,moving_atoms,arrows,scene,COLORS):
  color_buttons=[]
  names=[]
- scene.append_to_caption('\nChooose color of atoms :\n')
+ scene.append_to_caption('\nChoose color of atoms :\n')
  for i in COLORS:
    if i.x!=0 and i.y==0 and i.z==0: name='red'+str(i.x)
    elif i.x!=0 and i.x==i.y and i.z==0: name='yellow'+str(i.y)
@@ -348,6 +350,7 @@ def choose_color(atoms,all_atoms,balls,moving_atoms,arrows,scene,COLORS):
 
 
 def make_tetrahedrons(atoms_balls,COLORS,scene,tetrahedrons,maxbonding):
+ scene.select()
  at_pos=[ at.pos for at in atoms_balls]
  tetra=[]
  for i in tetrahedrons:
@@ -378,7 +381,6 @@ def make_tetrahedrons(atoms_balls,COLORS,scene,tetrahedrons,maxbonding):
   tetrahedrons.append([triangle(v0=ats[0],v1=ats[1],v2=ats[2]),\
                        triangle(v0=ats[0],v1=ats[2],v2=ats[3]),\
                        triangle(v0=ats[1],v1=ats[2],v2=ats[3]),curve(canvas=scene)])
-  print (tetrahedrons)
   for k in ats: tetrahedrons[-1][-1].append(k.pos)
   tetrahedrons[-1][-1].append(ats[0].pos)
 
@@ -404,11 +406,13 @@ def tetrahedrons_menu(atoms_balls,COLORS,scene,tetrahedrons):
   maxbonding=float(b.text)  
   make_tetrahedrons(atoms_balls,COLORS,scene,tetrahedrons,maxbonding)
 
- scene.append_to_caption('\nChooose maxbonding and tetrahedron :\n')
- winput(text=maxbonding, prompt='Type maxbonding',bind=F,canvas=scene)
- tetra_buttons=[button( bind=G , text='all on',height=100,canvas=scene),button( bind=G , text='all off',height=100,canvas=scene)]
+ scene.append_to_caption('\nChoose maxbonding and tetrahedron :')
+ winput(text=maxbonding, prompt='Type maxbonding',bind=F,pos=scene.caption_anchor)
+ tetra_buttons=[\
+     button( bind=G , text='all on',height=100,pos=scene.caption_anchor),\
+     button( bind=G , text='all off',height=100,pos=scene.caption_anchor)]
  for k in range(len(tetrahedrons)):
-  tetra_buttons.append(button( bind=G , text=str(k+1),height=100,canvas=scene))
+  tetra_buttons.append(button( bind=G , text=str(k+1),height=100,pos=scene.caption_anchor))
 
 def if_display_tetrahedrons(atoms_balls,COLORS,scene,tetrahedrons):
  def F(b):
@@ -433,11 +437,11 @@ def add_plane(alat):
   elif '1 0 0 center' in line: #sciana w srodku
    rt = shapes.rectangle(width=alat, height=alat)
    v=vector(.5*alat,.5*alat,.5*alat)
-   extrusion(shape=rt, path=[v,v+vector(0.1,0.,0.)], texture='tot_pot.png')
+   extrusion(shape=rt, path=[v,v+vector(0.01,0.,0.)], texture='tot_pot.png')
   elif '1 0 0 face' in line: #sciana
    rt = shapes.rectangle(width=alat, height=alat)
    v=vector(0,.5*alat,.5*alat)
-   extrusion(shape=rt, path=[v,v+vector(0.1,0.,0.)], texture='tot_pot.png')
+   extrusion(shape=rt, path=[v,v+vector(0.01,0.,0.)], texture='tot_pot.png')
  except: 1
 
 def rotate_one_obj(obj,ang,ax,orig): 
@@ -464,6 +468,27 @@ def rotate(disp,ang,ax,orig):
         try:
          rotate_one_obj(v3,ang,ax,orig)       
         except: 1
+
+def plot_dispersion(Q,FREQ,chosen_q,no_of_modes):
+ Q2=[[float(m) for m in i.split()[2:]] for i in Q]
+ for i in range(len(Q2)):
+   if i==0: dist=0
+   else: 
+    dq=[Q2[i][m]-Q2[i-1][m] for m in range(3)]
+    dist=dist+(dq[0]**2+dq[1]**2+dq[2]**2)**0.5
+   if chosen_q==Q[i]: 
+    f2=gcurve(color=color.red)
+    f2.plot([dist,0],[dist, FREQ[i][-1]])
+ plot_modes=[]
+ for j in range(no_of_modes):
+  plot_modes.append(gcurve())
+  for i in range(len(Q2)):
+   if i==0: dist=0
+   else: 
+    dq=[Q2[i][m]-Q2[i-1][m] for m in range(3)]
+    dist=dist+(dq[0]**2+dq[1]**2+dq[2]**2)**0.5
+   plot_modes[-1].plot(dist,  FREQ[i][j])
+
 '''
 def move_to_center(disp,crystal):
  o=0.5*(crystal[0]+crystal[1]+crystal[2])

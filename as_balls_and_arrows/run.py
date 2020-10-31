@@ -49,6 +49,9 @@ color.gray(0.9),color.gray(0.8),color.gray(0.7),color.gray(0.6)	 ]
         func.add_plane(alat)
     def rotate(self):
         func.rotate(self)        
+    def plot_dispersion(self,Q,FREQ,chosen_q,no_of_modes):
+        func.plot_dispersion(Q,FREQ,chosen_q,no_of_modes)
+
 
 class inputs():
  def __init__(self):
@@ -86,6 +89,7 @@ class motion(inputs):
        self.FREQ=[]
        self.DISPL=[]
        self.Q=[]    
+       self.no_of_modes=0
  def read_freqs_and_displacements(self):
   self.DISPL,self.FREQ,self.Q,self.no_of_modes=\
        func.read_freqs_and_displacements(self.file_matdyn_modes)
@@ -120,7 +124,7 @@ disp.set_coord_system(crystal_system.alat)
 disp.draw_lattice(crystal_system.crystal,crystal_system.crystal_primitive)
 disp.draw_equilibrium_atoms(crystal_system.atoms)
 disp.init_arrows(crystal_system.atoms,obj.vib[0])
-#disp.if_display_tetrahedrons(crystal_system.atoms)
+disp.if_display_tetrahedrons()
 disp.draw_displacement_arrows_and_balls(crystal_system.atoms,obj.vib,obj.freq,obj.no_of_modes)
 disp.choose_color(irr_atoms,crystal_system.atoms)
 
@@ -144,8 +148,11 @@ disp2.if_display_tetrahedrons()
 disp2.draw_displacement_arrows_and_balls(crystal_system_conv.atoms,obj.vib,obj.freq,obj.no_of_modes)
 disp2.choose_color(irr_atoms,crystal_system_conv.atoms)
 disp2.add_plane(crystal_system_conv.alat)
-print(disp2.atomic_balls)
+disp2.plot_dispersion(obj.Q,obj.FREQ,obj.q,obj.no_of_modes)
 #func.move_to_center(disp2,crystal_system_conv.crystal)
 #disp2.rotate()
+
+
+
 
 
