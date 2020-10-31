@@ -26,13 +26,13 @@ color.gray(0.9),color.gray(0.8),color.gray(0.7),color.gray(0.6)	 ]
     def init_arrows(self,equil_atoms,vib):
         self.arrows,self.moving_atoms=func.init_arrows\
                                       (equil_atoms[:],vib,self.A,self.COLORS[:])     
-    def draw_displacement_arrows(self,atoms,vib,vibimag,freq,no_of_modes):
+    def draw_displacement_arrows(self,atoms,vib,freq,no_of_modes):
         func.draw_displacement_arrows\
-                    (self.scene,self.arrows[:],self.moving_atoms,atoms[:],vib[:],vibimag[:],freq,\
+                    (self.scene,self.arrows[:],self.moving_atoms,atoms[:],vib[:],freq,\
                      self.A,no_of_modes)    
-    def draw_moving_atoms(self,atoms,vib,vibimag,freq,no_of_modes):
+    def draw_moving_atoms(self,atoms,vib,freq,no_of_modes):
         func.draw_moving_atoms\
-                    (self.scene,self.arrows,self.atomic_balls,self.moving_atoms,atoms[:],vib[:],vibimag[:],freq,\
+                    (self.scene,self.arrows,self.atomic_balls,self.moving_atoms,atoms[:],vib[:],freq,\
                      self.A,no_of_modes)   
     def draw_atomic_bondings(self,equil_atoms):
         self.atomic_bondings=func.draw_atomic_bondings(equil_atoms[:])
@@ -88,11 +88,10 @@ class motion(inputs):
        inputs.__init__(self)
        self.FREQ=[]
        self.DISPL=[]
-       self.DISPLimag=[]
        self.Q=[]    
        self.no_of_modes=0
  def read_freqs_and_displacements(self):
-  self.DISPL,self.DISPLimag,self.FREQ,self.Q,self.no_of_modes=\
+  self.DISPL,self.FREQ,self.Q,self.no_of_modes=\
        func.read_freqs_and_displacements(self.file_matdyn_modes)
 
 class chosen_motion(motion):
@@ -100,10 +99,9 @@ class chosen_motion(motion):
        motion.__init__(self)
        self.freq=[]
        self.vib=[]
-       self.vibimag=[]
        self.q=[]
  def ask_which_q(self):
-  self.vib,self.vibimag,self.freq,self.q=func.ask_which_q(self.Q,self.DISPL[:],self.DISPLimag[:],self.FREQ[:],
+  self.vib,self.freq,self.q=func.ask_which_q(self.Q,self.DISPL[:],self.FREQ[:],
        self.no_of_modes)
 
 
@@ -127,8 +125,8 @@ disp.draw_lattice(crystal_system.crystal,crystal_system.crystal_primitive)
 disp.draw_equilibrium_atoms(crystal_system.atoms)
 disp.init_arrows(crystal_system.atoms,obj.vib[0])
 disp.if_display_tetrahedrons()
-disp.draw_displacement_arrows(crystal_system.atoms,obj.vib,obj.vibimag,obj.freq,obj.no_of_modes)
-disp.draw_moving_atoms(crystal_system.atoms,obj.vib,obj.vibimag,obj.freq,obj.no_of_modes)
+disp.draw_displacement_arrows(crystal_system.atoms,obj.vib,obj.freq,obj.no_of_modes)
+disp.draw_moving_atoms(crystal_system.atoms,obj.vib,obj.freq,obj.no_of_modes)
 disp.choose_color(irr_atoms,crystal_system.atoms)
 
 
@@ -148,15 +146,10 @@ disp2.draw_lattice(crystal_system_conv.crystal,crystal_system_conv.crystal_primi
 disp2.draw_equilibrium_atoms(crystal_system_conv.atoms)
 disp2.init_arrows(crystal_system_conv.atoms,obj.vib[0])
 disp2.if_display_tetrahedrons()
-disp2.draw_displacement_arrows(crystal_system_conv.atoms,obj.vib,obj.vibimag,obj.freq,obj.no_of_modes)
-disp2.draw_moving_atoms(crystal_system_conv.atoms,obj.vib,obj.vibimag,obj.freq,obj.no_of_modes)
+disp2.draw_displacement_arrows(crystal_system_conv.atoms,obj.vib,obj.freq,obj.no_of_modes)
+disp2.draw_moving_atoms(crystal_system_conv.atoms,obj.vib,obj.freq,obj.no_of_modes)
 disp2.choose_color(irr_atoms,crystal_system_conv.atoms)
 disp2.add_plane(crystal_system_conv.alat)
 disp2.plot_dispersion(obj.Q,obj.FREQ,obj.q,obj.no_of_modes)
-#func.move_to_center(disp2,crystal_system_conv.crystal)
-#disp2.rotate()
-
-
-
 
 

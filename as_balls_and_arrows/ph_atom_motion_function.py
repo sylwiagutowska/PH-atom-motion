@@ -9,6 +9,12 @@ eps2=1e-2
 def round_vec(v):
  return np.array([ round(i,PRECIS) for i in v])
 
+def round_complex_vec(v):
+ return np.array([ complex(round(i.real,PRECIS),round(i.imag,PRECIS)) for i in v])
+
+def complex_module(x):
+ return (x.real**2+x.imag**2)**0.5
+
 def make_vector(v):
  return vector(v[0],v[1],v[2])
 
@@ -100,7 +106,6 @@ def make_conv_cell(ibrav,crystal_primitive,celldm):
 
 def read_freqs_and_displacements(file_matdyn_modes):
  DISPL=[]
- DISPLimag=[]
  FREQ=[]
  Q=[]
  h=open(file_matdyn_modes,'r')
@@ -110,7 +115,6 @@ def read_freqs_and_displacements(file_matdyn_modes):
  while i<len(tmp):
   if 'q' in tmp[i].split(): 
    DISPL.append([])
-   DISPLimag.append([])
    FREQ.append([])
    Q.append(tmp[i])
    i=i+2
@@ -118,28 +122,32 @@ def read_freqs_and_displacements(file_matdyn_modes):
     if 'freq' in tmp[i]: 
      FREQ[-1].append(float(tmp[i].split()[4]))
      DISPL[-1].append([])
-     DISPLimag[-1].append([])
     else:
      tmpi=tmp[i].split()
-     DISPL[-1][-1].append(round_vec([\
-                   float(tmpi[1]), float(tmpi[3]),float(tmpi[5])]))    
-     DISPLimag[-1][-1].append(round_vec([\
-                   float(tmpi[2]), float(tmpi[4]),float(tmpi[6])]))    
+     DISPL[-1][-1].append(round_complex_vec([\
+                   complex(float(tmpi[1]),float(tmpi[2])), complex(float(tmpi[3]),float(tmpi[4])), complex(float(tmpi[5]),float(tmpi[6]))]))    
     i=i+1
   i=i+3
+ for i in range(len(DISPL)):
+  for j in range(len(DISPL[i])):
+   sum_real=sum([sum([m.real**2 for m in k]) for k in DISPL[i][j]]) 
+   sum_imag=sum([sum([m.imag**2 for m in k]) for k in DISPL[i][j]]) 
+   if sum_real<sum_imag:
+    for k in range(len(DISPL[i][j])):
+     for m in range(3):
+       DISPL[i][j][k][m]=complex(-DISPL[i][j][k][m].imag,DISPL[i][j][k][m].real)
  for i in range(len(Q)):
   print( i,Q[i][:-1]),
  no_of_modes=len(FREQ[-1])
- return DISPL,DISPLimag,FREQ,Q,no_of_modes
+ return DISPL,FREQ,Q,no_of_modes
 
-def ask_which_q(Q,DISPL,DISPLimag,FREQ,no_of_modes):
+def ask_which_q(Q,DISPL,FREQ,no_of_modes):
  nq=input( 'I listed qs calculated by matdyn. which one you want to visualize? Write  the number 0 -'+str((len(Q)-1))+':    ')
  nq=int(nq)
  q=Q[nq]
  vib=DISPL[nq] #[nmode]
- vibimag=DISPLimag[nq] #[nmode]
  freq=FREQ[nq]
- return vib,vibimag,freq,q 
+ return vib,freq,q 
 
 
 
@@ -230,18 +238,22 @@ def draw_equilibrium_atoms(atoms,COLORS):
         for i in (atoms)]
  return at_equil
 
-def init_arrows(atoms,vib,A,COLORS):
- arrows=[ arrow(pos=make_vector(i[1]),\
-                 axis=make_vector(A*vib[i[2]]),\
+def init_arrows(atoms,vib0,A,COLORS):
+ arrows=[]
+ wt=[0 for i in range(3)]
+ sum_real=sum([ sum([vib0[ii[2]][k].real for k in range(3)]) for ii in atoms])
+ sum_imag=sum([ sum([vib0[ii[2]][k].imag for k in range(3)]) for ii in atoms])
+ for ii in atoms:
+  arrows.append( arrow(pos=make_vector(ii[1]),\
+                 axis=make_vector([ A*x.real for numx,x in enumerate(vib0[ii[2]]) ]),\
                  fixedwidth=True, shaftwidth=0.4,\
-                 color=COLORS[atoms[i[2]][2]],shininess=0.1)\
-          for i in atoms]
+                 color=COLORS[ii[2]],shininess=0.1))
  moving_atoms=[0,[ sphere(pos=make_vector(i[1]),\
                     radius=0.7,color=COLORS[i[2]], make_trail=True,visible=False) \
                for i in (atoms)]] #first element stands for no of mode
  return arrows,moving_atoms
 
-def draw_moving_atoms(scene,arrows,atomic_balls,moving_atoms,atoms,vib,vibimag,freq,A,no_of_modes):
+def draw_moving_atoms(scene,arrows,atomic_balls,moving_atoms,atoms,vib,freq,A,no_of_modes):
  #moving atoms
  def G(b):
    t,dt=0,0.05
@@ -254,32 +266,38 @@ def draw_moving_atoms(scene,arrows,atomic_balls,moving_atoms,atoms,vib,vibimag,f
    else:
     for i in arrows: i.opacity=0.5
     for i in atomic_balls: i.opacity=0.5
-    for i in moving_atoms[1]: i.visible=True  
+    for numi,i in enumerate(moving_atoms[1]): 
+     i.visible=True 
+     i.pos=atomic_balls[numi].pos 
    while b.checked==True:
     rate(10)
     for numi,i in enumerate(atoms):
-#     moving_atoms[1][numi].pos=(i.pos+(i.axis*sin(freq[moving_atoms[0]]*t)))
 #     vib=Acos(phase)+i*A*sin(phase)
 #     u=Acos(-wt+phase)=Acos(-wt)cos(phase)-Asin(-wt)sin(phase)=Re(vib)*cos(wt)+Im(vib)*sin(wt)
      moving_atoms[1][numi].pos=atomic_balls[numi].pos+\
-                       2*(make_vector(vib[moving_atoms[0]][i[2]])*cos(freq[moving_atoms[0]]*t)+\
-                       make_vector(vibimag[moving_atoms[0]][i[2]])*sin(freq[moving_atoms[0]]*t))
+                       make_vector([ A*vib[moving_atoms[0]][i[2]][m].real*cos(freq[moving_atoms[0]]*t)+\
+                                     A*vib[moving_atoms[0]][i[2]][m].imag*sin(freq[moving_atoms[0]]*t) \
+                                     for m in range(3)])
     t+=dt  
  moving_atoms_button=radio(bind=G,text="moving atoms on/off")
 
-def draw_displacement_arrows(scene,arrows,moving_atoms,atoms,vib,vibimag,freq,A,no_of_modes):
+def draw_displacement_arrows(scene,arrows,moving_atoms,atoms,vib,freq,A,no_of_modes):
  mode_buttons=[]
  #arrows
  def F(b):
   m=int(b.text.split('\n')[0])-1
   #dont know why, but it HAS TO be done twice, otherwise not all atoms change their arrows :(
   for numi,i in enumerate(atoms):
-   arrows[numi].length=make_vector(A*vib[m][i[2]]).mag
-   arrows[numi].axis=make_vector(A*vib[m][i[2]])
+   arrows[numi].axis= make_vector([ A*x.real for numx,x in enumerate(vib[m][i[2]]) ])
+  # arrows[numi].length=arrows[numi].axis
    moving_atoms[0]=m
   for numi,i in enumerate(atoms):
-   arrows[numi].length=make_vector(A*vib[m][i[2]]).mag
-   arrows[numi].axis=make_vector(A*vib[m][i[2]])
+   wt=[0 for k in range(3)]
+   for k in range(3):
+    if vib[m][i[2]][k].real!=0: wt[k]=atan(vib[m][i[2]][k].imag/vib[m][i[2]][k].real)
+    else: wt[k]=1
+   arrows[numi].axis= make_vector([ A*(x.real*cos(wt[numx])+x.imag*sin(wt[numx])) for numx,x in enumerate(vib[m][i[2]]) ])
+  # arrows[numi].length=arrows[numi].axis
    moving_atoms[0]=m
  scene.append_to_caption('\nChoose mode:\n')
  for k in range(no_of_modes):
