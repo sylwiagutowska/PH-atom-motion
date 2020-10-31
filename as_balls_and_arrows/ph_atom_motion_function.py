@@ -259,13 +259,15 @@ def draw_displacement_arrows(scene,arrows,moving_atoms,atoms,vib,freq,A,no_of_mo
  #arrows
  def F(b):
   m=int(b.text.split('\n')[0])-1
+  #dont know why, but it HAS TO be done twice, otherwise not all atoms change their arrows :(
   for numi,i in enumerate(atoms):
-   arrows[numi].visible=False
-   print(vib[m][i[2]])
-   arrows[numi].axis=make_vector(A*vib[m][i[2]])
    arrows[numi].length=make_vector(A*vib[m][i[2]]).mag
-   arrows[numi].visible=True
-  moving_atoms[0]=m
+   arrows[numi].axis=make_vector(A*vib[m][i[2]])
+   moving_atoms[0]=m
+  for numi,i in enumerate(atoms):
+   arrows[numi].length=make_vector(A*vib[m][i[2]]).mag
+   arrows[numi].axis=make_vector(A*vib[m][i[2]])
+   moving_atoms[0]=m
  scene.append_to_caption('\nChoose mode:\n')
  for k in range(no_of_modes):
   mode_buttons.append(button( bind=F , text=str(k+1)+'\n'+str(round(freq[k],2)),height=100))
