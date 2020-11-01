@@ -279,6 +279,7 @@ def draw_moving_atoms(scene,arrows,atomic_balls,moving_atoms,atoms,vib,freq,A,no
                                      A*vib[moving_atoms[0]][i[2]][m].imag*sin(freq[moving_atoms[0]]*t) \
                                      for m in range(3)])
     t+=dt  
+ scene.append_to_caption('\n')
  moving_atoms_button=radio(bind=G,text="moving atoms on/off")
 
 def draw_displacement_arrows(scene,arrows,moving_atoms,atoms,vib,freq,A,no_of_modes):
@@ -289,16 +290,14 @@ def draw_displacement_arrows(scene,arrows,moving_atoms,atoms,vib,freq,A,no_of_mo
   #dont know why, but it HAS TO be done twice, otherwise not all atoms change their arrows :(
   for numi,i in enumerate(atoms):
    arrows[numi].axis= make_vector([ A*x.real for numx,x in enumerate(vib[m][i[2]]) ])
-  # arrows[numi].length=arrows[numi].axis
+   arrows[numi].length=make_vector([ A*x.real for numx,x in enumerate(vib[m][i[2]]) ])
    moving_atoms[0]=m
+
   for numi,i in enumerate(atoms):
-   wt=[0 for k in range(3)]
-   for k in range(3):
-    if vib[m][i[2]][k].real!=0: wt[k]=atan(vib[m][i[2]][k].imag/vib[m][i[2]][k].real)
-    else: wt[k]=1
-   arrows[numi].axis= make_vector([ A*(x.real*cos(wt[numx])+x.imag*sin(wt[numx])) for numx,x in enumerate(vib[m][i[2]]) ])
-  # arrows[numi].length=arrows[numi].axis
+   arrows[numi].axis= make_vector([ A*(x.real) for numx,x in enumerate(vib[m][i[2]]) ])
+   arrows[numi].length=make_vector([ A*x.real for numx,x in enumerate(vib[m][i[2]]) ])
    moving_atoms[0]=m
+
  scene.append_to_caption('\nChoose mode:\n')
  for k in range(no_of_modes):
   mode_buttons.append(button( bind=F , text=str(k+1)+'\n'+str(round(freq[k],2)),height=100))
