@@ -129,14 +129,11 @@ def read_freqs_and_displacements(file_matdyn_modes):
     i=i+1
   i=i+3
  for i in range(len(DISPL)):
-  for j in range(len(DISPL[i])):
-   sum_real=sum([sum([m.real**2 for m in k]) for k in DISPL[i][j]]) 
-   sum_imag=sum([sum([m.imag**2 for m in k]) for k in DISPL[i][j]]) 
-   if sum_real<sum_imag:
-    for k in range(len(DISPL[i][j])):
-     for m in range(3):
+  for j in range(len(DISPL[i])): 
+   for k in range(len(DISPL[i][j])):
+    for m in range(3):
+     if DISPL[i][j][k][m].imag**2>DISPL[i][j][k][m].real**2:
        DISPL[i][j][k][m]=complex(-DISPL[i][j][k][m].imag,DISPL[i][j][k][m].real)
- for i in range(len(Q)):
   print( i,Q[i][:-1]),
  no_of_modes=len(FREQ[-1])
  return DISPL,FREQ,Q,no_of_modes
@@ -151,11 +148,12 @@ def ask_which_q(Q,DISPL,FREQ,no_of_modes):
 
 
 
-def set_scene(crystal,disp):
+def set_scene(disp,crystal,q):
  crystal_vec=[ make_vector(i) for i in crystal]
  scene=canvas(width=900,height=450,background=color.white)
  scene.center=0.5*(crystal_vec[0]+crystal_vec[1]+crystal_vec[2])
  #scene.parallel_projection = True
+ scene.title=q
  scene.autocenter=0.5*(crystal_vec[0]+crystal_vec[1]+crystal_vec[2])
  scene.stereo = 'active'
  scene.stereodepth = 0
@@ -246,6 +244,7 @@ def init_arrows(atoms,vib0,A,COLORS):
  for ii in atoms:
   arrows.append( arrow(pos=make_vector(ii[1]),\
                  axis=make_vector([ A*x.real for numx,x in enumerate(vib0[ii[2]]) ]),\
+                 length=make_vector([ A*x.real for numx,x in enumerate(vib0[ii[2]]) ]).mag,\
                  fixedwidth=True, shaftwidth=0.4,\
                  color=COLORS[ii[2]],shininess=0.1))
  moving_atoms=[0,[ sphere(pos=make_vector(i[1]),\
@@ -289,13 +288,13 @@ def draw_displacement_arrows(scene,arrows,moving_atoms,atoms,vib,freq,A,no_of_mo
   m=int(b.text.split('\n')[0])-1
   #dont know why, but it HAS TO be done twice, otherwise not all atoms change their arrows :(
   for numi,i in enumerate(atoms):
-   arrows[numi].axis= make_vector([ A*x.real for numx,x in enumerate(vib[m][i[2]]) ])
-   arrows[numi].length=make_vector([ A*x.real for numx,x in enumerate(vib[m][i[2]]) ])
+   arrows[numi].axis=  make_vector([ A*x.real for numx,x in enumerate(vib[m][i[2]]) ])
+   arrows[numi].length=arrows[numi].axis.mag
    moving_atoms[0]=m
 
   for numi,i in enumerate(atoms):
-   arrows[numi].axis= make_vector([ A*(x.real) for numx,x in enumerate(vib[m][i[2]]) ])
-   arrows[numi].length=make_vector([ A*x.real for numx,x in enumerate(vib[m][i[2]]) ])
+   arrows[numi].axis=  make_vector([ A*x.real for numx,x in enumerate(vib[m][i[2]]) ])
+   arrows[numi].length=arrows[numi].axis.mag
    moving_atoms[0]=m
 
  scene.append_to_caption('\nChoose mode:\n')

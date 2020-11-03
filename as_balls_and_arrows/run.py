@@ -15,8 +15,8 @@ color.gray(0.9),color.gray(0.8),color.gray(0.7),color.gray(0.6)	 ]
      self.A=10 #amplitude. The displacement is multiplied by A
      self.coord_system=[]
      self.tetrahedrons=[]
-    def set_scene(self,crystal):
-        self.scene=func.set_scene(crystal[:],self)
+    def set_scene(self,crystal,q):
+        self.scene=func.set_scene(self,crystal[:],q)
     def set_coord_system(self,alat):
          self.coord_system=func.set_coord_system(alat,self.scene)
     def draw_lattice(self,crystal,crystal_primitive):
@@ -118,7 +118,7 @@ obj.read_freqs_and_displacements()
 obj.ask_which_q()
 crystal_system.move_atoms_to_cell()
 crystal_system.add_atoms_by_symmetry()
-disp.set_scene(crystal_system.crystal)
+disp.set_scene(crystal_system.crystal,obj.q)
 disp.draw_atomic_bondings(crystal_system.atoms)
 disp.set_coord_system(crystal_system.alat)
 disp.draw_lattice(crystal_system.crystal,crystal_system.crystal_primitive)
@@ -139,7 +139,7 @@ crystal_system_conv.read_crystal_info()
 crystal_system_conv.make_conventional_cell()
 crystal_system_conv.move_atoms_to_cell()
 crystal_system_conv.add_atoms_by_symmetry()
-disp2.set_scene(crystal_system_conv.crystal)
+disp2.set_scene(crystal_system_conv.crystal,obj.q)
 disp2.draw_atomic_bondings(crystal_system_conv.atoms)
 disp2.set_coord_system(crystal_system_conv.alat)
 disp2.draw_lattice(crystal_system_conv.crystal,crystal_system_conv.crystal_primitive)
