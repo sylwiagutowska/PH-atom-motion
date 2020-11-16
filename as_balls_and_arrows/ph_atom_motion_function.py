@@ -128,12 +128,15 @@ def read_freqs_and_displacements(file_matdyn_modes):
                    complex(float(tmpi[1]),float(tmpi[2])), complex(float(tmpi[3]),float(tmpi[4])), complex(float(tmpi[5]),float(tmpi[6]))]))    
     i=i+1
   i=i+3
+
  for i in range(len(DISPL)):
+  '''
   for j in range(len(DISPL[i])): 
    for k in range(len(DISPL[i][j])):
     for m in range(3):
      if DISPL[i][j][k][m].imag**2>DISPL[i][j][k][m].real**2:
        DISPL[i][j][k][m]=complex(-DISPL[i][j][k][m].imag,DISPL[i][j][k][m].real)
+  '''
   print( i,Q[i][:-1]),
  no_of_modes=len(FREQ[-1])
  return DISPL,FREQ,Q,no_of_modes
@@ -274,34 +277,58 @@ def draw_moving_atoms(scene,arrows,atomic_balls,moving_atoms,atoms,vib,freq,A,no
 #     vib=Acos(phase)+i*A*sin(phase)
 #     u=Acos(-wt+phase)=Acos(-wt)cos(phase)-Asin(-wt)sin(phase)=Re(vib)*cos(wt)+Im(vib)*sin(wt)
      moving_atoms[1][numi].pos=atomic_balls[numi].pos+\
-                       make_vector([ A*vib[moving_atoms[0]][i[2]][m].real*cos(freq[moving_atoms[0]]*t)+\
-                                     A*vib[moving_atoms[0]][i[2]][m].imag*sin(freq[moving_atoms[0]]*t) \
+                       make_vector([ A/4*vib[moving_atoms[0]][i[2]][m].real*cos(freq[moving_atoms[0]]*t)+\
+                                     A/4*vib[moving_atoms[0]][i[2]][m].imag*sin(freq[moving_atoms[0]]*t) \
                                      for m in range(3)])
     t+=dt  
  scene.append_to_caption('\n')
  moving_atoms_button=radio(bind=G,text="moving atoms on/off")
 
-def draw_displacement_arrows(scene,arrows,moving_atoms,atoms,vib,freq,A,no_of_modes):
+def choose_mode(scene,arrows,moving_atoms,atoms,vib,freq,A,no_of_modes):
  mode_buttons=[]
  #arrows
  def F(b):
   m=int(b.text.split('\n')[0])-1
   #dont know why, but it HAS TO be done twice, otherwise not all atoms change their arrows :(
   for numi,i in enumerate(atoms):
-   arrows[numi].axis=  make_vector([ A*x.real for numx,x in enumerate(vib[m][i[2]]) ])
-   arrows[numi].length=arrows[numi].axis.mag
    moving_atoms[0]=m
-
-  for numi,i in enumerate(atoms):
-   arrows[numi].axis=  make_vector([ A*x.real for numx,x in enumerate(vib[m][i[2]]) ])
-   arrows[numi].length=arrows[numi].axis.mag
-   moving_atoms[0]=m
-
+  draw_displacement_arrows(scene,arrows,moving_atoms,atoms,vib[m],freq,A,no_of_modes)
  scene.append_to_caption('\nChoose mode:\n')
  for k in range(no_of_modes):
   mode_buttons.append(button( bind=F , text=str(k+1)+'\n'+str(round(freq[k],2)),height=100))
 
 
+def draw_displacement_arrows(scene,arrows,moving_atoms,atoms,chosen_vib,freq,A,no_of_modes):
+  #dont know why, but it HAS TO be done twice, otherwise not all atoms change their arrows :(
+  for numi,i in enumerate(atoms):
+   arrows[numi].axis=  make_vector([ A*x.real for numx,x in enumerate(chosen_vib[i[2]]) ])
+   arrows[numi].length=make_vector([ A*x.real for numx,x in enumerate(chosen_vib[i[2]]) ]).mag
+
+  for numi,i in enumerate(atoms):
+   arrows[numi].axis=  make_vector([ A*x.real for numx,x in enumerate(chosen_vib[i[2]]) ])
+   arrows[numi].length=make_vector([ A*x.real for numx,x in enumerate(chosen_vib[i[2]]) ]).mag
+
+
+
+def change_phase(scene,arrows,moving_atoms,atoms,vib,freq,A,no_of_modes):
+ m=moving_atoms[0]
+ vib_new=vib[m].copy()
+ def PB(b):
+  if b.text=='0':
+   vib_new=vib[m].copy()
+  if b.text=='-pi/4':
+   vib_new=[[ complex(2**(-0.5)*(x.real+x.imag),0) for x in vib[m][i[2]]] for i in atoms ]
+  if b.text=='pi/4':
+   vib_new=[[ complex(2**(-0.5)*(x.real-x.imag),0) for x in vib[m][i[2]]] for i in atoms ]
+  if b.text=='pi/2':
+   vib_new=[[ complex(-x.imag,0) for x in vib[m][i[2]]] for i in atoms ]
+  draw_displacement_arrows(scene,arrows,moving_atoms,atoms,vib_new,freq,A,no_of_modes)
+ phase_buttons=[]
+ scene.append_to_caption('\nChoose phase (arrows will be displayed at different time:\n')
+ for k in ['0','-pi/4','pi/4','pi/2']:
+  phase_buttons.append(button( bind=PB , text=k,height=100))
+
+ 
 def draw_atomic_bondings(atoms): 
  atomic_bondings=[]
  mini=[]
@@ -500,6 +527,7 @@ def rotate(disp,ang,ax,orig):
          rotate_one_obj(v3,ang,ax,orig)       
         except: 1
 
+
 def plot_dispersion(Q,FREQ,chosen_q,no_of_modes):
  Q2=[[float(m) for m in i.split()[2:]] for i in Q]
  for i in range(len(Q2)):
@@ -520,26 +548,3 @@ def plot_dispersion(Q,FREQ,chosen_q,no_of_modes):
     dist=dist+(dq[0]**2+dq[1]**2+dq[2]**2)**0.5
    plot_modes[-1].plot(dist,  FREQ[i][j])
 
-'''
-def move_to_center(disp,crystal):
- o=0.5*(crystal[0]+crystal[1]+crystal[2])
- for v in vars(disp): 
-  try: 
-   rotate_one_obj(vars(disp)[v],ang,ax)
-  except:
-   if type(vars(disp)[v]) is not list: continue 
-   for v1 in vars(disp)[v]:
-    try:
-     v1.pos=v1.pos+o
-    except:
-     if type(v1) is not list: continue
-     for v2 in v1:
-      try:
-       v2.pos=v2.pos+o
-      except: 
-       if type(v2) is not list: continue
-       for v3 in v2:
-        try:
-         v3.pos=v3.pos+o
-        except: 1
-'''
