@@ -289,9 +289,7 @@ def choose_mode(scene,arrows,moving_atoms,atoms,vib,freq,A,no_of_modes):
  #arrows
  def F(b):
   m=int(b.text.split('\n')[0])-1
-  #dont know why, but it HAS TO be done twice, otherwise not all atoms change their arrows :(
-  for numi,i in enumerate(atoms):
-   moving_atoms[0]=m
+  moving_atoms[0]=m
   draw_displacement_arrows(scene,arrows,moving_atoms,atoms,vib[m],freq,A,no_of_modes)
  scene.append_to_caption('\nChoose mode:\n')
  for k in range(no_of_modes):
@@ -303,7 +301,6 @@ def draw_displacement_arrows(scene,arrows,moving_atoms,atoms,chosen_vib,freq,A,n
   for numi,i in enumerate(atoms):
    arrows[numi].axis=  make_vector([ A*x.real for numx,x in enumerate(chosen_vib[i[2]]) ])
    arrows[numi].length=make_vector([ A*x.real for numx,x in enumerate(chosen_vib[i[2]]) ]).mag
-
   for numi,i in enumerate(atoms):
    arrows[numi].axis=  make_vector([ A*x.real for numx,x in enumerate(chosen_vib[i[2]]) ])
    arrows[numi].length=make_vector([ A*x.real for numx,x in enumerate(chosen_vib[i[2]]) ]).mag
@@ -311,9 +308,9 @@ def draw_displacement_arrows(scene,arrows,moving_atoms,atoms,chosen_vib,freq,A,n
 
 
 def change_phase(scene,arrows,moving_atoms,atoms,vib,freq,A,no_of_modes):
- m=moving_atoms[0]
- vib_new=vib[m].copy()
  def PB(b):
+  m=moving_atoms[0]
+  vib_new=vib[m].copy()
   if b.text=='0':
    vib_new=vib[m].copy()
   if b.text=='-pi/4':
